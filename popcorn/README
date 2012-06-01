@@ -1,0 +1,95 @@
+CakePHP is a rapid development framework for PHP which uses commonly known design patterns like Active Record, Association Data Mapping, Front Controller and MVC. Our primary goal is to provide a structured framework that enables PHP users at all levels to rapidly develop robust web applications, without any loss to flexibility.
+
+The Cake Software Foundation - promoting development related to CakePHP
+http://cakefoundation.org/
+
+CakePHP - the rapid development PHP framework
+http://www.cakephp.org
+
+Cookbook - user documentation for learning about CakePHP
+http://book.cakephp.org
+
+API - quick reference to CakePHP
+http://api.cakephp.org
+
+The Bakery - everything CakePHP
+http://bakery.cakephp.org
+
+The Show - live and archived podcasts about CakePHP and more
+http://live.cakephp.org
+
+CakePHP TV - screen casts from events and video tutorials
+http://tv.cakephp.org
+
+CakePHP Google Group - community mailing list and forum
+http://groups.google.com/group/cake-php
+
+#cakephp on irc.freenode.net - chat with CakePHP developers
+irc://irc.freenode.net/cakephp
+
+
+#### Popcorn Dependencies ####
+* redis server
+* php-zip
+* apache mod-rewrite
+* apache mod-userdir
+
+
+
+#### Ubuntu Setup ####
+
+sudo passwd root
+
+sudo apt-get install ssh
+sudo apt-get install apache2
+sudo apt-get install  mysql-server-5.5
+sudo apt-get install php5
+sudo apt-get install php5-mysql
+
+sudo apt-get install redis-server
+sudo apt-get install vim
+sudo apt-get install git
+
+
+sudo vim /etc/apache2/httpd.conf
+ServerName localhost
+sudo a2enmod userdir
+
+sudo vim /etc/apache2/mods-enabled/php5.conf
+    #<IfModule mod_userdir.c>
+    #    <Directory /home/*/public_html>
+    #        php_admin_value engine Off
+    #    </Directory>
+    #</IfModule>
+
+mkdir ~/public_html
+sudo service apache2 restart
+
+
+ssh-keygen -t rsa -C "zand3rs@gmail.com"
+cat ~/.ssh/id_rsa.pub
+ssh -T git@github.com
+git config --global user.name "zander"
+git config --global user.email "zand3rs@gmail.com"
+
+
+
+sudo a2enmod rewrite
+
+sudo apt-get install make
+sudo apt-get install php5-dev
+
+git clone git://github.com/nicolasff/phpredis.git
+
+cd phpredis
+phpize
+./configure
+make
+sudo -s make install
+
+sudo -s
+echo "extension=redis.so">/etc/php5/conf.d/redis.ini
+exit
+
+sudo service apache2 restart
+

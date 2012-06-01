@@ -1,0 +1,18 @@
+{
+  "name": "Popcorn",
+  "version": "1.0",
+  "description": "Popcorn bookmarks.",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "popup": "popup.html"
+  },
+  "permissions": [
+    "tabs",
+    "http://localhost/",
+    "unlimitedStorage"
+  ],
+  "web_accessible_resources": [
+      "js/*.js",
+      "js/zip/*.js"
+  ]
+}

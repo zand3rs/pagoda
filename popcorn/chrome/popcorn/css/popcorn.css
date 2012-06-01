@@ -1,0 +1,23 @@
+body {
+    min-width: 357px;
+    overflow-x: hidden;
+    color: #444444;
+}
+
+#action button {
+}
+
+#bookmarks div {
+    margin: 8px 0;
+    padding: 4px;
+    background-color: #F0F5FB;
+    border-top: dotted 1px #999;
+    border-bottom: dotted 1px #999;
+}
+
+#bookmarks div a {
+    display: block;
+    color: #365ECD;
+    text-decoration: none;
+}
+

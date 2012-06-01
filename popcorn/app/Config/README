@@ -1,0 +1,22 @@
+API Access
+To prevent abuse, Google places limits on API requests. Using a valid OAuth token or API key allows you to exceed anonymous limits by connecting requests back to your project.
+
+Authorized API Access
+OAuth allows users to share specific data with you (for example, contact lists) while keeping their usernames, passwords, and other information private. Learn more
+
+Branding information
+The following information is shown to users whenever you request access to their private data.
+
+Product name:   Popcorn
+Google account: zand3rs@gmail.com
+
+Client ID for web applications
+Client ID:  
+1063125973669.apps.googleusercontent.com
+
+Client secret:  
+QXzI7I-zCNO7R9WACN7Z5QKr
+
+Redirect URIs:  http://localhost/oauth2callback
+JavaScript origins: http://localhost
+
