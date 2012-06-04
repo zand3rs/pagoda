@@ -186,27 +186,24 @@
             getEntries : function(file, onend) {
                 //var blobReader = new zip.BlobReader(file);
                 var blobReader = new zip.HttpReader(file);
+                $("#flash").html($("#flash").html() + 'blob reader: ' + JSON.stringify(blobReader) + '<br>');
                 zip.createReader(blobReader, function(zipReader) {
+                    $("#flash").html($("#flash").html() + 'zip reader: ' + JSON.stringify(zipReader) + '<br>');
                     zipReader.getEntries(onend);
                 }, onerror);
             },
-            getEntryFile : function(entry, onend) {
+            getEntryFile : function(entry, onend, onprogress) {
                 var writer, zipFileEntry;
 
                 function getData() {
                     entry.getData(writer, function(blob) {
                         var blobURL = zipFileEntry.toURL();
-                        onend(blobURL);
+                        onend(blobURL, function() {
+                        });
                     }, onprogress);
                 }
 
-                var file_path = userDir + '/' + entry.filename;
-                onend(file_path);
                 /*
-                //-- create file path...
-                createFile() {
-                }
-
                 createTempFile(function(fileEntry) {
                     zipFileEntry = fileEntry;
                     writer = new zip.FileWriter(zipFileEntry);
@@ -242,8 +239,8 @@
             var bookmark = bookmarks[i];
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
-                deflateArchive(url);
-                //showFs();
+                downloadFile(url);
+                showFs();
             }
         }
         //alert(JSON.stringify(bookmark));
@@ -310,19 +307,18 @@
             writeToFile(file_path, data, function(file_path) {
                 $("#flash").html($("#flash").html() + 'Write callback: ' + file_path + '<br>');
                
-            });
-        });
-    }
-
-    //-------------------------------------------------------------------------
-
-    function deflateArchive(url) {
-        model.getEntries(url, function(entries) {
-            entries.forEach(function(entry) {
-                //$("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
-                model.getEntryFile(entry, function(file_path) {
-                    $("#flash").html($("#flash").html() + 'file_path: ' + file_path + '<br>');
+                model.getEntries(url, function(entries) {
+                    $("#flash").html($("#flash").html() + 'model.getEntries: ' + JSON.stringify(entries) + '<br>');
                 });
+
+                /*
+                fileSystem.root.getFile(file_path, {create: false}, function(fileEntry) {
+                    model.getEntries(fileEntry.toURL(), function(entries) {
+                        $("#flash").html($("#flash").html() + 'model.getEntries: ayos<br>');
+                    });
+                }, errorHandler);
+                */
+
             });
         });
     }
