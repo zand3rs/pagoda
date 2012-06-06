@@ -283,21 +283,21 @@
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
                 //deflateArchive(url);
-                downloadFile2(url, function(file_path) {
+                downloadFile(url, function(file_path) {
                     $("#flash").html($("#flash").html() + 'download successful: ' + file_path + '<br>');
                     fileSystem.root.getFile(file_path, {}, function(fileEntry) {
                         $("#flash").html($("#flash").html() + 'file entry: ' + fileEntry.toURL() + '<br>');
                         fileEntry.file(function(file) {
-                            $("#flash").html($("#flash").html() + 'file size: ' + file.size + '<br>');
-                            $("#flash").html($("#flash").html() + 'file type: ' + file.type + '<br>');
                             var blobReader = new zip.BlobReader(file);
                             zip.createReader(blobReader, function(zipReader) {
                                 if (zipReader.getEntries) {
                                     $("#flash").html($("#flash").html() + 'getEtnries exists! <br>');
                                 }
+                                /*
                                 zipReader.getEntries(function(entries) {
                                     $("#flash").html($("#flash").html() + 'entries length: ' + entries.length + '<br>');
                                 });
+                                */
                             }, onerror);
                         });
                     });
@@ -372,26 +372,6 @@
                 callback(file_path);
             });
         });
-    }
-
-    //-------------------------------------------------------------------------
-
-    function downloadFile2(url, callback) {
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, false); // Note: synchronous
-            xhr.responseType = 'arraybuffer';
-            xhr.send();
-
-            var file_name = url.replace(/.*\//, '');
-            //var file_path = userDir + '/' + file_name;
-            var file_path = file_name;
-            writeToFile(file_path, xhr.response, function(file_path) {
-                callback(file_path);
-            });
-        } catch(e) {
-            $("#flash").html($("#flash").html() + 'XHR Error: ' + e.toString() + '<br>');
-        }
     }
 
     //-------------------------------------------------------------------------

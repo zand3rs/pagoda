@@ -137,9 +137,7 @@
                         $("#flash").html($("#flash").html() + 'Write failed: ' + e.toString() + '<br>');
                     };
 
-                    var bb = new BlobBuilder();
-                    bb.append(data);
-                    //fileWriter.write(bb.getBlob('application/zip'));
+                    var bb = new BlobBuilder(data);
                     fileWriter.write(bb.getBlob());
 
                 }, errorHandler);
@@ -216,8 +214,8 @@
 
         return {
             getEntries : function(file, onend) {
-                var blobReader = new zip.BlobReader(file);
-                //var blobReader = new zip.HttpReader(file);
+                //var blobReader = new zip.BlobReader(file);
+                var blobReader = new zip.HttpReader(file);
                 zip.createReader(blobReader, function(zipReader) {
                     zipReader.getEntries(onend);
                 }, onerror);
@@ -282,27 +280,7 @@
             var bookmark = bookmarks[i];
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
-                //deflateArchive(url);
-                downloadFile2(url, function(file_path) {
-                    $("#flash").html($("#flash").html() + 'download successful: ' + file_path + '<br>');
-                    fileSystem.root.getFile(file_path, {}, function(fileEntry) {
-                        $("#flash").html($("#flash").html() + 'file entry: ' + fileEntry.toURL() + '<br>');
-                        fileEntry.file(function(file) {
-                            $("#flash").html($("#flash").html() + 'file size: ' + file.size + '<br>');
-                            $("#flash").html($("#flash").html() + 'file type: ' + file.type + '<br>');
-                            var blobReader = new zip.BlobReader(file);
-                            zip.createReader(blobReader, function(zipReader) {
-                                if (zipReader.getEntries) {
-                                    $("#flash").html($("#flash").html() + 'getEtnries exists! <br>');
-                                }
-                                zipReader.getEntries(function(entries) {
-                                    $("#flash").html($("#flash").html() + 'entries length: ' + entries.length + '<br>');
-                                });
-                            }, onerror);
-                        });
-                    });
-
-                });
+                deflateArchive(url);
                 //showFs();
             }
         }
@@ -359,7 +337,7 @@
 
     //-------------------------------------------------------------------------
 
-    function downloadFile(url, callback) {
+    function downloadFile(url) {
         $.get(url, function(data) {
             $("#flash").html($("#flash").html() + 'download successful: ' + url + '<br>');
 
@@ -368,30 +346,10 @@
 
             $("#flash").html($("#flash").html() + 'file_path: ' + file_path + '<br>');
             writeToFile(file_path, data, function(file_path) {
-                //$("#flash").html($("#flash").html() + 'Write callback: ' + file_path + '<br>');
-                callback(file_path);
+                $("#flash").html($("#flash").html() + 'Write callback: ' + file_path + '<br>');
+               
             });
         });
-    }
-
-    //-------------------------------------------------------------------------
-
-    function downloadFile2(url, callback) {
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, false); // Note: synchronous
-            xhr.responseType = 'arraybuffer';
-            xhr.send();
-
-            var file_name = url.replace(/.*\//, '');
-            //var file_path = userDir + '/' + file_name;
-            var file_path = file_name;
-            writeToFile(file_path, xhr.response, function(file_path) {
-                callback(file_path);
-            });
-        } catch(e) {
-            $("#flash").html($("#flash").html() + 'XHR Error: ' + e.toString() + '<br>');
-        }
     }
 
     //-------------------------------------------------------------------------
@@ -399,14 +357,12 @@
     function deflateArchive(url) {
         model.getEntries(url, function(entries) {
             entries.forEach(function(entry) {
-                $("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
-                /*
+                //$("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
                 model.getEntryFile(entry, function(file_path) {
                     $("#flash").html($("#flash").html() + 'file_path: ' + file_path + '<br>');
                 }, function(current, total) {
                     $("#flash").html('progress: ' + current + '<br>');
                 });
-                */
             });
         });
     }
