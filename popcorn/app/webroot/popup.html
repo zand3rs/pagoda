@@ -2,7 +2,9 @@
 <head>
     <link rel="stylesheet" type="text/css" href="css/popcorn.css"/>
     <script src="js/jquery.min.js"></script>
+    <script src="js/zip/dataview.js"></script>
     <script src="js/zip/zip.js"></script>
+    <script src="js/zip/zip-fs.js"></script>
 
     <script>
     //-------------------------------------------------------------------------
@@ -61,7 +63,8 @@
     //-------------------------------------------------------------------------
 
     function initFs() {
-        window.requestFileSystem(window.PERSISTENT, 1024*1024*1024, onInitFs, errorHandler);
+        //window.requestFileSystem(window.PERSISTENT, 1024*1024*1024, onInitFs, errorHandler);
+        window.requestFileSystem(window.TEMPORARY, 1024*1024, onInitFs, errorHandler);
     }
 
     //-------------------------------------------------------------------------
@@ -284,27 +287,40 @@
                 downloadFile2(url, function(file_path) {
                     $("#flash").html($("#flash").html() + 'download successful: ' + file_path + '<br>');
                     fileSystem.root.getFile(file_path, {}, function(fileEntry) {
-                        //$("#flash").html($("#flash").html() + 'file entry: ' + fileEntry.toURL() + '<br>');
+                        $("#flash").html($("#flash").html() + 'file entry: ' + fileEntry.toURL() + '<br>');
                         fileEntry.file(function(file) {
-                            //$("#flash").html($("#flash").html() + 'file size: ' + file.size + '<br>');
-                            //$("#flash").html($("#flash").html() + 'file type: ' + file.type + '<br>');
+                            $("#flash").html($("#flash").html() + 'file size: ' + file.size + '<br>');
+                            $("#flash").html($("#flash").html() + 'file type: ' + file.type + '<br>');
                             zip.createReader(new zip.BlobReader(file), function(zipReader) {
                                 zipReader.getEntries(function(entries) {
+                                    var entry = entries[0];
+                                        var writer = new zip.BlobWriter();
+                                        entry.getData(writer, function(blob) {
+                                            $("#flash").html($("#flash").html() + 'getData: OK <br>');
+                                            //var blobURL = fileEntry.toURL();
+                                            //$("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
+                                        }, function(current, total) {
+                                            $("#flash").html($("#flash").html() + 'current: ' + current + '<br>');
+                                            $("#flash").html($("#flash").html() + 'total: ' + total + '<br>');
+                                        });
+                                /*
                                     $("#flash").html($("#flash").html() + 'entries length: ' + entries.length + '<br>');
                                     entries.forEach(function(entry) {
                                         //var fname = entry.filename.replace(/.*\//, '');
                                         //$("#flash").html($("#flash").html() + 'fname: ' + fname + '<br>');
                                         //$("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
-                                        createFile(fileSystem.root, entry.filename, function(fileEntry) {
+                                        //createFile(fileSystem.root, entry.filename, function(fileEntry) {
+                                        createTempFile(function(fileEntry) {
                                             //$("#flash").html($("#flash").html() + 'fileEntry: ' + fileEntry.name + '<br>');
                                             var writer = new zip.FileWriter(fileEntry);
                                             entry.getData(writer, function(blob) {
-                                                //$("#flash").html($("#flash").html() + 'getData: OK <br>');
-                                                var blobURL = fileEntry.toURL();
-                                                $("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
+                                                $("#flash").html($("#flash").html() + 'getData: OK <br>');
+                                                //var blobURL = fileEntry.toURL();
+                                                //$("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
                                             });
                                         });
                                     });
+                                */
                                 });
                             }, onerror);
                         });
@@ -426,11 +442,13 @@
         getActiveUser();
         showBookmarks();
 
+        /*
         $("#add-bookmark").click(function() {
             chrome.tabs.getSelected(null, function(tab) {
                 addBookmark(tab.title, tab.url);
                 });
             });
+            */
 
     });
     </script>
