@@ -4,7 +4,7 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/zip/dataview.js"></script>
     <script src="js/zip/zip.js"></script>
-    <script src="js/zip/zip-fs.js"></script>
+    <script src="js/popcorn.js"></script>
 
     <script>
     //-------------------------------------------------------------------------
@@ -449,6 +449,10 @@
                 });
             });
             */
+
+        popcorn.helloWorld(function(msg) {
+            $("#flash").html($("#flash").html() + 'helloWorld: ' + msg + '<br>');
+        });
 
     });
     </script>
