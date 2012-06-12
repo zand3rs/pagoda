@@ -5,13 +5,9 @@
     obj.URL = obj.webkitURL || obj.mozURL || obj.URL;
 
     var fs = null;
-    var error = '';
 
-    function getLastError() {
-        return error;
-    }
-
-    function fsEerrorHandler(e) {
+    function fsEerrorHandler(e, onerror) {
+        var error = '';
 
         switch (e.code) {
             case FileError.QUOTA_EXCEEDED_ERR:
@@ -33,34 +29,70 @@
                 error = 'Unknown Error';
                 break;
         }
+
+        if (onerror) onerror(error);
     }
 
-    function initialize() {
+    function initialize(onerror) {
         obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
             fs = filesystem;
-        }, fsEerrorHandler);
+        }, function(e) {
+            fsEerrorHandler(e, onerror);
+        });
+    }
+
+    function createDir(root_dir_entry, folders, onend, onerror) {
+        if (folders[0] == '.' || folders[0] == '') {
+            folders.shift();
+        }
+
+        if (! folders.length) {
+            return onend(root_dir_entry);
+        }
+
+        root_dir_entry.getDirectory(folders[0], {create: true}, function(dir_entry) {
+            //-- Recursively add the new subfolder...
+            createDir(dir_entry, folders.shift(), onend, onerror);
+        }, function(e) {
+            fsEerrorHandler(e, onerror);
+        });
     }
 
     function createFolder(folders, onend, onerror) {
         if (! fs) {
             return onerror('File system unavailable!');
         }
-
-        if (folders[0] == '.' || folders[0] == '') {
-            folders.shift();
-        }
-
-        if (! folders.length) {
-            return onend();
-        }
+        createDir(fs.root, folders, onend, onerror);
     }
 
     function createFile(fpath, onend, onerror) {
-        onend(file_entry);
+        var folders = fpath.split('/');
+        var file = folders.pop();
+
+        createFolder(folders, function(dir_entry) {
+            dir_entry.getFile(file, {create: true}, function(file_entry) {
+                onend(file_entry);
+            });
+        }, onerror);
     }
 
     function saveAs(fpath, data, onend, onerror) {
-        onend(fpath);
+        createFile(fpath, function(file_entry) {
+            file_entry.createWriter(function(file_writer) {
+                file_writer.onwriteend = function(e) {
+                    onend(fpath);
+                };
+                file_writer.onerror = function(e) {
+                    onerror('Write failed: ' + e.toString());
+                };
+
+                var bb = new obj.BlobBuilder();
+                bb.append(data);
+                file_writer.write(bb.getBlob());
+            }, function(e) {
+                fsEerrorHandler(e, onerror);
+            });
+        }, onerror);
     }
 
     function download(url, folder, onend, onerror) {
@@ -71,11 +103,9 @@
             xhr.send();
 
             var fname = url.replace(/.*\//, '');
-            var fpath = folder + '/' + fname;
+            var fpath = (folder || '.') + '/' + fname;
 
-            writeToFile(file_path, xhr.response, function(file_path) {
-                onend(file_path);
-            });
+            saveAs(fpath, xhr.response, onend, onerror);
         } catch(e) {
             onerror('XHR Error: ' + e.toString());
         }
@@ -85,6 +115,7 @@
         test : function(onend) {
             onend('Hello World!');
         },
+        initialize : initialize,
         download : download
     };
 

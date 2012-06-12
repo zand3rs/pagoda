@@ -12,10 +12,6 @@
     zip.workerScriptsPath = "js/zip/";
 
     var host = 'http://localhost/~zander/popcorn';
-    window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
-    window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder;
-
-    var fileSystem = null;
     var activeUser = null;
     var userDir = null;
 
@@ -31,230 +27,11 @@
     }
 
     //-------------------------------------------------------------------------
-
-    function errorHandler(e) {
-      var msg = '';
-
-      switch (e.code) {
-          case FileError.QUOTA_EXCEEDED_ERR:
-              msg = 'QUOTA_EXCEEDED_ERR';
-              break;
-          case FileError.NOT_FOUND_ERR:
-              msg = 'NOT_FOUND_ERR';
-              break;
-          case FileError.SECURITY_ERR:
-              msg = 'SECURITY_ERR';
-              break;
-          case FileError.INVALID_MODIFICATION_ERR:
-              msg = 'INVALID_MODIFICATION_ERR';
-              break;
-          case FileError.INVALID_STATE_ERR:
-              msg = 'INVALID_STATE_ERR';
-              break;
-          default:
-              msg = 'Unknown Error';
-              break;
-      };
-
-      $("#flash").html($("#flash").html() + 'Error: ' + msg + '<br>');
-    }
-
     //-------------------------------------------------------------------------
 
-    function initFs() {
-        window.requestFileSystem(window.PERSISTENT, 1024*1024*1024, onInitFs, errorHandler);
-    }
-
-    //-------------------------------------------------------------------------
-
-    function onInitFs(fs) {
-        fileSystem = fs;
-        //$("#flash").html('Opened file system: ' + fs.name);
-    }
-
-    function createDir(rootDirEntry, folders, callback) {
-        // Throw out './' or '/' and move on to prevent something like '/foo/.//bar'.
-        if (folders[0] == '.' || folders[0] == '') {
-            folders = folders.slice(1);
-        }
-
-        if (folders.length) {
-            rootDirEntry.getDirectory(folders[0], {create: true}, function(dirEntry) {
-                // $("#flash").html($("#flash").html() + 'dir: ' + folders[0] + ' created.<br>');
-                // Recursively add the new subfolder (if we still have another to create).
-                createDir(dirEntry, folders.slice(1), callback);
-            }, errorHandler);
-        } else {
-            if (callback) {
-                callback(rootDirEntry);
-            }
-        }
-    }
-
-    function createFile(rootDirEntry, file_path, callback) {
-        var folders = file_path.split('/');
-        var file = folders.pop();
-
-        createDir(rootDirEntry, folders, function(dirEntry) {
-            dirEntry.getFile(file, {create: true}, function(fileEntry) {
-                callback(fileEntry);
-            });
-        });
-    }
-
-    function createTempFile(callback) {
-        var tmpFilename = "tmp.dat";
-        requestFileSystem(TEMPORARY, 4 * 1024 * 1024 * 1024, function(filesystem) {
-            function create() {
-                filesystem.root.getFile(tmpFilename, {create : true}, function(zipFile) {
-                    callback(zipFile);
-                });
-            }
-
-            filesystem.root.getFile(tmpFilename, null, function(entry) {
-                entry.remove(create, create);
-                }, create);
-        });
-    }
-
-    //-------------------------------------------------------------------------
-
-    function writeToFile(file_path, data, callback) {
-        $("#flash").html($("#flash").html() + 'start copying...<br>');
-        if (fileSystem) {
-            $("#flash").html($("#flash").html() + 'with valid fs...<br>');
-            //--- create dirs first otherwise getFile will fail...
-            fileSystem.root.getFile(file_path, {create: true}, function(fileEntry) {
-                $("#flash").html($("#flash").html() + 'file created...<br>');
-                fileEntry.createWriter(function(fileWriter) {
-                    fileWriter.onwriteend = function(e) {
-                        $("#flash").html($("#flash").html() + 'Write completed: ' + file_path + '<br>');
-                        callback(file_path);
-                    };
-
-                    fileWriter.onerror = function(e) {
-                        $("#flash").html($("#flash").html() + 'Write failed: ' + e.toString() + '<br>');
-                    };
-
-                    var bb = new BlobBuilder();
-                    bb.append(data);
-                    //fileWriter.write(bb.getBlob('application/zip'));
-                    fileWriter.write(bb.getBlob());
-
-                }, errorHandler);
-            }, errorHandler);
-        }
-    }
-
-    //-------------------------------------------------------------------------
-
-    function initUserDir(user) {
-        if (!user) return;
-
-        userDir = 'files/' + strPad(user.id, 10);
-        if (fileSystem) {
-            createDir(fileSystem.root, userDir.split('/'));
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
-
-    function toArray(list) {
-        return Array.prototype.slice.call(list || [], 0);
-    }
-
-    function listResults(entries) {
-        var fragment = document.createDocumentFragment();
-
-        entries.forEach(function(entry, i) {
-            var type = entry.isDirectory ? 'folder' : 'file';
-            var li = document.createElement('li');
-            li.innerHTML = ['<span>', type + ': ' + entry.name, '</span>'].join('');
-            fragment.appendChild(li);
-        });
-
-        document.querySelector('#filelist').appendChild(fragment);
-    }
-
-    function showFs() {
-
-        var rootDirEntry = fileSystem.root;
-        var entries = [];
-
-        rootDirEntry.getDirectory(userDir, {create: false}, function(dirEntry) {
-            var dirReader = dirEntry.createReader();
-            // Call the reader.readEntries() until no more results are returned.
-            var readEntries = function() {
-                dirReader.readEntries (function(results) {
-                    if (!results.length) {
-                        listResults(entries.sort());
-                    } else {
-                        entries = entries.concat(toArray(results));
-                        readEntries();
-                    }
-                }, errorHandler);
-            };
-
-            readEntries(); // Start reading dirs.
-        }, errorHandler);
-    }
-
-    function showZipContent(file_path) {
-    }
-
-    //-------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
-    
     function onerror(message) {
         $("#flash").html('ERROR: ' + message + '<br>');
     }
-
-    var model = (function() {
-        var URL = window.webkitURL || window.mozURL || window.URL;
-
-        return {
-            getEntries : function(file, onend) {
-                var blobReader = new zip.BlobReader(file);
-                //var blobReader = new zip.HttpReader(file);
-                zip.createReader(blobReader, function(zipReader) {
-                    zipReader.getEntries(onend);
-                }, onerror);
-            },
-            getEntryFile : function(entry, onend, onprogress) {
-                var writer, zipFileEntry;
-
-                function getData() {
-                    //onend('onend: test_url');
-                    $("#flash").html($("#flash").html() + 'entry: ' + ((entry.getData) ? 'true' : 'false') + '<br>');
-                    /*
-                    entry.getData(writer, function(blob) {
-                        var blobURL = zipFileEntry.toURL();
-                        onend(blobURL);
-                    }, onprogress);
-                    */
-                }
-
-                var file_path = userDir + '/' + entry.filename;
-
-                //-- create file path...
-                /*
-                createFile(fileSystem.root, file_path, function(fileEntry) {
-                    zipFileEntry = fileEntry;
-                    writer = new zip.FileWriter(zipFileEntry);
-                    getData();
-                });
-                */
-                
-
-                createTempFile(function(fileEntry) {
-                    zipFileEntry = fileEntry;
-                    writer = new zip.FileWriter(zipFileEntry);
-                    getData();
-                });
-            }
-        };
-    })();
 
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
@@ -267,9 +44,9 @@
         var app_url = host + '/users/getActiveUser';
 
         $.get(app_url, function(data) {
-            if (data && data.id) { 
+            if (data && data.id) {
                 activeUser = data;
-                initUserDir(activeUser);
+                userDir = activeUser ? strPad(activeUser.id, 10) : '.';
             }
         }, 'json');
     }
@@ -281,41 +58,11 @@
             var bookmark = bookmarks[i];
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
-                //deflateArchive(url);
-                downloadFile2(url, function(file_path) {
-                    $("#flash").html($("#flash").html() + 'download successful: ' + file_path + '<br>');
-                    fileSystem.root.getFile(file_path, {}, function(fileEntry) {
-                        //$("#flash").html($("#flash").html() + 'file entry: ' + fileEntry.toURL() + '<br>');
-                        fileEntry.file(function(file) {
-                            //$("#flash").html($("#flash").html() + 'file size: ' + file.size + '<br>');
-                            //$("#flash").html($("#flash").html() + 'file type: ' + file.type + '<br>');
-                            zip.createReader(new zip.BlobReader(file), function(zipReader) {
-                                zipReader.getEntries(function(entries) {
-                                    $("#flash").html($("#flash").html() + 'entries length: ' + entries.length + '<br>');
-                                    entries.forEach(function(entry) {
-                                        //var fname = entry.filename.replace(/.*\//, '');
-                                        //$("#flash").html($("#flash").html() + 'fname: ' + fname + '<br>');
-                                        //$("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
-                                        createFile(fileSystem.root, entry.filename, function(fileEntry) {
-                                            //$("#flash").html($("#flash").html() + 'fileEntry: ' + fileEntry.name + '<br>');
-                                            var writer = new zip.FileWriter(fileEntry);
-                                            entry.getData(writer, function(blob) {
-                                                //$("#flash").html($("#flash").html() + 'getData: OK <br>');
-                                                var blobURL = fileEntry.toURL();
-                                                $("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
-                                            });
-                                        });
-                                    });
-                                });
-                            }, onerror);
-                        });
-                    });
-
-                });
-                //showFs();
+                popcorn.download(url, userDir, function(fpath) {
+                    $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
+                }, onerror);
             }
         }
-        //alert(JSON.stringify(bookmark));
     }
 
     //-------------------------------------------------------------------------
@@ -368,62 +115,7 @@
 
     //-------------------------------------------------------------------------
 
-    function downloadFile(url, callback) {
-        $.get(url, function(data) {
-            $("#flash").html($("#flash").html() + 'download successful: ' + url + '<br>');
-
-            var file_name = url.replace(/.*\//, '');
-            var file_path = userDir + '/' + file_name;
-
-            $("#flash").html($("#flash").html() + 'file_path: ' + file_path + '<br>');
-            writeToFile(file_path, data, function(file_path) {
-                //$("#flash").html($("#flash").html() + 'Write callback: ' + file_path + '<br>');
-                callback(file_path);
-            });
-        });
-    }
-
-    //-------------------------------------------------------------------------
-
-    function downloadFile2(url, callback) {
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, false); // Note: synchronous
-            xhr.responseType = 'arraybuffer';
-            xhr.send();
-
-            var file_name = url.replace(/.*\//, '');
-            //var file_path = userDir + '/' + file_name;
-            var file_path = file_name;
-            writeToFile(file_path, xhr.response, function(file_path) {
-                callback(file_path);
-            });
-        } catch(e) {
-            $("#flash").html($("#flash").html() + 'XHR Error: ' + e.toString() + '<br>');
-        }
-    }
-
-    //-------------------------------------------------------------------------
-
-    function deflateArchive(url) {
-        model.getEntries(url, function(entries) {
-            entries.forEach(function(entry) {
-                $("#flash").html($("#flash").html() + 'entry: ' + entry.filename + '<br>');
-                /*
-                model.getEntryFile(entry, function(file_path) {
-                    $("#flash").html($("#flash").html() + 'file_path: ' + file_path + '<br>');
-                }, function(current, total) {
-                    $("#flash").html('progress: ' + current + '<br>');
-                });
-                */
-            });
-        });
-    }
-
-    //-------------------------------------------------------------------------
-
     $(document).ready(function() {
-        initFs();
         getActiveUser();
         showBookmarks();
 
@@ -434,10 +126,14 @@
             });
 
         /*
+        */
         popcorn.test(function(msg) {
             $("#flash").html($("#flash").html() + 'test: ' + msg + '<br>');
         });
+        /*
         */
+
+        popcorn.initialize(onerror);
 
     });
     </script>
