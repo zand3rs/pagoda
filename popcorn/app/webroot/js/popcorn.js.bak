@@ -1,7 +1,7 @@
 (function(obj) {
 
     obj.requestFileSystem = obj.webkitRequestFileSystem || obj.mozRequestFileSystem || obj.requestFileSystem;
-    obj.BlobBuilder = obj.WebKitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
+    obj.BlobBuilder = obj.webkitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
     obj.URL = obj.webkitURL || obj.mozURL || obj.URL;
 
     var fs = null;
@@ -72,9 +72,15 @@
         var file = folders.pop();
 
         createFolder(folders, function(dir_entry) {
+            console.log("folder created");
+            console.log("file");
+            console.log(file);
+            console.log("dir_entry");
+            console.log(dir_entry);
             dir_entry.getFile(file, {create: true}, function(file_entry) {
                 onend(file_entry);
             }, function(e) {
+                console.log('XHR Error: ' + e.toString());
                 fsEerrorHandler(e, onerror);
             });
         }, onerror);
@@ -83,6 +89,8 @@
     function saveAs(fpath, data, onend, onerror) {
         createFile(fpath, function(file_entry) {
             file_entry.createWriter(function(file_writer) {
+                console.log(file_entry);
+                console.log(file_writer);
                 file_writer.onwriteend = function(e) {
                     onend(fpath);
                 };
@@ -112,6 +120,7 @@
 
             var fname = url.replace(/.*\//, '');
             var fpath = (folder || '.') + '/' + fname;
+            console.log(xhr.response);
 
             saveAs(fpath, xhr.response, onend, onerror);
         } catch(e) {

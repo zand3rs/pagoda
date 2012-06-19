@@ -1,7 +1,7 @@
 (function(obj) {
 
     obj.requestFileSystem = obj.webkitRequestFileSystem || obj.mozRequestFileSystem || obj.requestFileSystem;
-    obj.BlobBuilder = obj.webkitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
+    obj.BlobBuilder = obj.WebKitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
     obj.URL = obj.webkitURL || obj.mozURL || obj.URL;
 
     var fs = null;
@@ -34,7 +34,8 @@
     }
 
     function initialize(onerror) {
-        obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
+        //obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
+        obj.requestFileSystem(obj.TEMPORARY, 4*1024*1024, function(filesystem) {
             fs = filesystem;
         }, function(e) {
             fsEerrorHandler(e, onerror);
@@ -50,9 +51,10 @@
             return onend(root_dir_entry);
         }
 
-        root_dir_entry.getDirectory(folders[0], {create: true}, function(dir_entry) {
+        var folder = folders.shift();
+        root_dir_entry.getDirectory(folder, {create: true}, function(dir_entry) {
             //-- Recursively add the new subfolder...
-            createDir(dir_entry, folders.shift(), onend, onerror);
+            createDir(dir_entry, folders, onend, onerror);
         }, function(e) {
             fsEerrorHandler(e, onerror);
         });
@@ -72,6 +74,8 @@
         createFolder(folders, function(dir_entry) {
             dir_entry.getFile(file, {create: true}, function(file_entry) {
                 onend(file_entry);
+            }, function(e) {
+                fsEerrorHandler(e, onerror);
             });
         }, onerror);
     }
@@ -86,9 +90,13 @@
                     onerror('Write failed: ' + e.toString());
                 };
 
-                var bb = new obj.BlobBuilder();
-                bb.append(data);
-                file_writer.write(bb.getBlob());
+                try {
+                    var bb = new obj.BlobBuilder();
+                    bb.append(data);
+                    file_writer.write(bb.getBlob());
+                } catch (e) {
+                    onerror('Write failed: ' + e.toString());
+                }
             }, function(e) {
                 fsEerrorHandler(e, onerror);
             });
