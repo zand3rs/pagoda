@@ -60,6 +60,9 @@
                 var url = host + bookmark.archive;
                 popcorn.download(url, userDir, function(fpath) {
                     $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
+                    popcorn.extract(fpath, function(blobURL) {
+                        $("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
+                    }, onerror);
                 }, onerror);
             }
         }

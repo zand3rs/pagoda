@@ -103,6 +103,28 @@
         }, onerror);
     }
 
+    function getFile(fpath, onend, onerror) {
+        fs.root.getFile(fpath, {create: false}, function(file_entry) {
+            onend(file_entry);
+        }, function(e) {
+            fsEerrorHandler(e, onerror);
+        });
+    }
+
+    function fileExists(fpath, onend) {
+        getFile(fpath, function(file_entry) {
+            onend(true);
+        }, function(e) {
+            onend(false);
+        });
+    }
+
+    function getFilePath(url, folder) {
+        var fname = url.replace(/.*\//, '');
+        var fpath = (folder || '.') + '/' + fname;
+        return fpath;
+    }
+
     function download(url, folder, onend, onerror) {
         try {
             var xhr = new XMLHttpRequest();
@@ -110,8 +132,7 @@
             xhr.responseType = 'arraybuffer';
             xhr.send();
 
-            var fname = url.replace(/.*\//, '');
-            var fpath = (folder || '.') + '/' + fname;
+            var fpath = getFilePath(url, folder);
 
             saveAs(fpath, xhr.response, onend, onerror);
         } catch(e) {
@@ -119,12 +140,46 @@
         }
     }
 
+    function cached_download(url, folder, onend, onerror) {
+        var fpath = getFilePath(url, folder);
+        fileExists(fpath, function(exists) {
+            if (exists) {
+                onend(fpath);
+            } else {
+                download(url, folder, onend, onerror);
+            }
+        });
+    }
+
+    function extract(fpath, onend, onerror) {
+        getFile(fpath, function(file_entry) {
+            file_entry.file(function(file) {
+                zip.createReader(new zip.BlobReader(file), function(zip_reader) {
+                    zip_reader.getEntries(function(entries) {
+                        entries.forEach(function(entry) {
+                            createFile(entry.filename, function(file_entry) {
+                                var writer = new zip.FileWriter(file_entry);
+                                entry.getData(writer, function(blob) {
+                                    var blobURL = file_entry.toURL();
+                                    onend(blobURL);
+                                });
+                            });
+                        });
+                    });
+                }, onerror);
+            }, function(e) {
+                fsEerrorHandler(e, onerror);
+            });
+        }, onerror);
+    }
+
     obj.popcorn = {
         test : function(onend) {
             onend('Hello World!');
         },
         initialize : initialize,
-        download : download
+        download   : cached_download,
+        extract    : extract
     };
 
 })(this);
