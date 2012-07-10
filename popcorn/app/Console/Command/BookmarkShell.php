@@ -34,7 +34,7 @@ class BookmarkShell extends Shell {
         $pathinfo = pathinfo($url);
         $root_dir = rtrim(WWW_ROOT, DS);
         $user_dir = str_pad($user_id, 10, '0', STR_PAD_LEFT);
-        $upload_dir = DS.'files';
+        $upload_dir = Configure::read('UPLOAD_ROOT');
         $dest_dir = $user_dir.DS.$basename;
         $dest_file = 'index.html';
 

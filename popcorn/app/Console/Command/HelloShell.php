@@ -11,13 +11,16 @@ class HelloShell extends Shell {
         $this->out($src);
         $this->out($zip);
 
+        $upload_root = Configure::read('UPLOAD_ROOT');
+        $this->out($upload_root);
+
         /*
         $dir = new Folder($src);
         $files = $dir->findRecursive();
         $status = Zip::create($zip, $files, true);
         */
-        $status = Zip::create($zip, $src, true);
+        //$status = Zip::create($zip, $src, true);
 
-        $this->out($status);
+        //$this->out($status);
     }
 }

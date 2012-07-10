@@ -54,14 +54,20 @@
     //-------------------------------------------------------------------------
 
     function downloadBookmark(id) {
+        $("#flash").html($("#flash").html() + 'bookmarks: ' + JSON.stringify(bookmarks) + '<br>');
         for (var i in bookmarks) {
             var bookmark = bookmarks[i];
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
-                popcorn.download(url, userDir, function(fpath) {
+                var dest_dir = popcorn.dirname(bookmark.archive);
+                var index = bookmark.local_path;
+                popcorn.download(url, dest_dir, function(fpath) {
                     $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
-                    popcorn.extract(fpath, function(blobURL) {
-                        $("#flash").html($("#flash").html() + 'blobURL: ' + blobURL + '<br>');
+                    popcorn.extract(fpath, dest_dir, function(fpath) {
+                        $("#flash").html($("#flash").html() + 'extract successful: ' + fpath + '<br>');
+                        popcorn.getFsUrl(index, function(url) {
+                            $("#flash").html($("#flash").html() + 'index: ' + url + '<br>');
+                        });
                     }, onerror);
                 }, onerror);
             }
@@ -73,15 +79,16 @@
     function showBookmarks() {
         var app_url = host + '/bookmarks/get_all';
         $.get(app_url, function(data) {
-                var bookmarksHtml = '';
                 $.each(data, function(key, val) {
                     var bookmark = val.Bookmark;
                     bookmarks.push(bookmark);
-
-                    //bookmarksHtml += "<div><a href='" + bookmark.url + "' target='_blank'>" + bookmark.title + "</a></div>";
-                    bookmarksHtml += "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                    popcorn.getFsUrl(bookmark.local_path, function(url) {
+                        var bookmarksHtml = (url)
+                            ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
+                            : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                        $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
+                    });
                 });
-                $('#bookmarks').html(bookmarksHtml);
         }, 'json');
     }
 
@@ -119,7 +126,7 @@
     //-------------------------------------------------------------------------
 
     $(document).ready(function() {
-        getActiveUser();
+        //getActiveUser();
         showBookmarks();
 
         $("#add-bookmark").click(function() {

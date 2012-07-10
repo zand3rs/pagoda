@@ -119,8 +119,16 @@
         });
     }
 
+    function basename(path) {
+        return path.replace(/.*\//, '');
+    }
+
+    function dirname(path) {
+        return path.replace(/\/[^\/]*$/, '');
+    }
+
     function getFilePath(url, folder) {
-        var fname = url.replace(/.*\//, '');
+        var fname = basename(url);
         var fpath = (folder || '.') + '/' + fname;
         return fpath;
     }
@@ -151,17 +159,27 @@
         });
     }
 
-    function extract(fpath, onend, onerror) {
+    function extract(fpath, folder, onend, onerror, onprogress) {
         getFile(fpath, function(file_entry) {
             file_entry.file(function(file) {
                 zip.createReader(new zip.BlobReader(file), function(zip_reader) {
                     zip_reader.getEntries(function(entries) {
+                        var total_files = entries.length;
+                        var file_count = 0;
+                        function onprogress() {
+                            file_count++;
+                            if (file_count >= total_files) {
+                                onend(fpath);
+                            }
+                        }
                         entries.forEach(function(entry) {
-                            createFile(entry.filename, function(file_entry) {
+                            var entry_path = (folder || '.') + '/' + entry.filename;
+                            createFile(entry_path, function(file_entry) {
                                 var writer = new zip.FileWriter(file_entry);
                                 entry.getData(writer, function(blob) {
-                                    var blobURL = file_entry.toURL();
-                                    onend(blobURL);
+                                    //var blobURL = file_entry.toURL();
+                                    //onend(blobURL);
+                                    onprogress();
                                 });
                             });
                         });
@@ -173,13 +191,24 @@
         }, onerror);
     }
 
+    function getFsUrl(fpath, onend) {
+        getFile(fpath, function(file_entry) {
+            onend(file_entry.toURL());
+        }, function() {
+            onend('');
+        });
+    }
+
     obj.popcorn = {
         test : function(onend) {
             onend('Hello World!');
         },
         initialize : initialize,
         download   : cached_download,
-        extract    : extract
+        extract    : extract,
+        basename   : basename,
+        dirname    : dirname,
+        getFsUrl   : getFsUrl
     };
 
 })(this);
