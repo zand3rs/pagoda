@@ -1,6 +1,7 @@
 (function(obj) {
 
     obj.requestFileSystem = obj.webkitRequestFileSystem || obj.mozRequestFileSystem || obj.requestFileSystem;
+    obj.resolveLocalFileSystemURL = obj.webkitResolveLocalFileSystemURL || obj.resolveLocalFileSystemURL;
     obj.BlobBuilder = obj.WebKitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
     obj.URL = obj.webkitURL || obj.mozURL || obj.URL;
 
@@ -194,21 +195,40 @@
     function getFsUrl(fpath, onend) {
         getFile(fpath, function(file_entry) {
             onend(file_entry.toURL());
-        }, function() {
-            onend('');
         });
+    }
+
+    function resolveFsUrl(url, onend) {
+        obj.resolveLocalFileSystemURL(url, function(file_entry) {
+            onend(file_entry);
+        });
+    }
+
+    function readFileAsText(fpath, onend, onerror) {
+        getFile(fpath, function(file_entry) {
+            file_entry.file(function(file) {
+                var reader = new FileReader(); 
+                reader.onloadend = function(e) {
+                    onend(this.result);
+                };
+                reader.readAsText(file);
+            }, function(e) {
+                fsEerrorHandler(e, onerror);
+            });
+        }, onerror);
     }
 
     obj.popcorn = {
         test : function(onend) {
             onend('Hello World!');
         },
-        initialize : initialize,
-        download   : cached_download,
-        extract    : extract,
-        basename   : basename,
-        dirname    : dirname,
-        getFsUrl   : getFsUrl
+        initialize     : initialize,
+        download       : cached_download,
+        extract        : extract,
+        basename       : basename,
+        dirname        : dirname,
+        getFsUrl       : getFsUrl,
+        readFileAsText : readFileAsText
     };
 
 })(this);
