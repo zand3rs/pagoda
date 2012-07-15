@@ -9,8 +9,6 @@
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
-    zip.workerScriptsPath = "js/zip/";
-
     var host = 'http://localhost/~zander/popcorn';
     var activeUser = null;
     var userDir = null;
@@ -61,6 +59,14 @@
                 var url = host + bookmark.archive;
                 var dest_dir = popcorn.dirname(bookmark.archive);
                 var index = bookmark.local_path;
+                $("#flash").html($("#flash").html() + 'download dest_dir: ' + dest_dir + '<br>');
+
+                /*
+                popcorn.deleteFolder(dest_dir, function(msg) {
+                    $("#flash").html($("#flash").html() + 'deleteFolder: ' + msg + '<br>');
+                }, onerror);
+                */
+
                 popcorn.download(url, dest_dir, function(fpath) {
                     $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
                     popcorn.extract(fpath, dest_dir, function(fpath) {
@@ -79,16 +85,19 @@
                     $("#flash").html($("#flash").html() + 'data: ' + out + '<br>');
                 }, onerror);
                 */
+
+                /*
                 popcorn.readFileAsText(index, function(data) {
                     var baseurl = 'filesystem:http://localhost/temporary/files/0000000001/91618313efc8ebe404680d6b00f81b50/';
-                    //var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
-                    //var out = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
+                    var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
                     var regex1 = /(href)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
-                    var regex2 = /(src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
+                    var regex2 = /(src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/;
                     //var out = data.replace(regex1, "$1$2$3" + baseurl + "$4$5");
                         //out = out.replace(regex2, "$1$2$3" + baseurl + "$4$5");
+                    data = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
                     $("#flash").html($("#flash").html() + 'data: ' + data + '<br>');
                 }, onerror);
+                */
             }
         }
     }
@@ -102,15 +111,17 @@
                     var bookmark = val.Bookmark;
                     bookmarks.push(bookmark);
 
-                    //popcorn.getFsUrl(bookmark.local_path, function(url) {
-                    //    var bookmarksHtml = (url)
-                    //        ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
-                    //        : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                    //    $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
-                    //});
+                    popcorn.getFsUrl(bookmark.local_path, function(url) {
+                        var bookmarksHtml = (url)
+                            ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
+                            : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                        $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
+                    });
 
+                    /*
                     var bookmarksHtml = "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
                     $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
+                    */
                 });
         }, 'json');
     }
@@ -159,11 +170,9 @@
             });
 
         /*
-        */
         popcorn.test(function(msg) {
             $("#flash").html($("#flash").html() + 'test: ' + msg + '<br>');
         });
-        /*
         */
 
         popcorn.initialize(onerror);

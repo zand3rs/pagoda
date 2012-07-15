@@ -38,7 +38,7 @@
         file_entry.createWriter(function(file_writer) {
             file_writer.onwriteend = function(e) {
                 if (onend) {
-                    onend(fpath);
+                    onend(file_entry.name);
                 }
             };
             file_writer.onerror = function(e) {
@@ -88,6 +88,8 @@
     //==========================================================================
 
     function initialize(onerror) {
+        zip.workerScriptsPath = "js/zip/";
+
         //obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
         obj.requestFileSystem(obj.TEMPORARY, 4*1024*1024, function(filesystem) {
             fs = filesystem;
@@ -116,12 +118,15 @@
 
     function deleteFolder(folder, onend, onerror) {
         if (! fs) {
-            return onerror('File system unavailable!');
+            if (onerror) {
+                onerror('File system unavailable!');
+            }
+            return;
         }
         fs.root.getDirectory(folder, {}, function(dir_entry) {
             dir_entry.removeRecursively(function() {
                 if (onend) {
-                    onend('Directory removed.');
+                    onend('Directory ' + folder + ' removed.');
                 }
             }, function(e) {
                 fsErrorHandler(e, onerror);
@@ -221,7 +226,7 @@
                         var total_files = entries.length;
                         var file_count = 0;
                         function _onprogress(file_entry) {
-                            //fsResolveUrls(file_entry);
+                            fsResolveUrls(file_entry);
 
                             file_count++;
                             if (onprogress) {
