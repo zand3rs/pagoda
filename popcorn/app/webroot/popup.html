@@ -71,13 +71,23 @@
                     }, onerror);
                 }, onerror);
 
+                /*
                 popcorn.readFileAsText(index, function(data) {
                     var baseurl = 'filesystem:http://localhost/temporary/files/0000000001/91618313efc8ebe404680d6b00f81b50/';
-                    var regex_href = /(href *= *)(['"])([^'"]*)(['"])/g;
-                    var regex_src = /(src *= *)(['"])([^'"]*)(['"])/g;
-                    var out = data.replace(regex_href, "$1$2" + baseurl + "$3$4");
-                        out = out.replace(regex_src, "$1$2" + baseurl + "$3$4");
+                    var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
+                    var out = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
                     $("#flash").html($("#flash").html() + 'data: ' + out + '<br>');
+                }, onerror);
+                */
+                popcorn.readFileAsText(index, function(data) {
+                    var baseurl = 'filesystem:http://localhost/temporary/files/0000000001/91618313efc8ebe404680d6b00f81b50/';
+                    //var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
+                    //var out = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
+                    var regex1 = /(href)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
+                    var regex2 = /(src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
+                    //var out = data.replace(regex1, "$1$2$3" + baseurl + "$4$5");
+                        //out = out.replace(regex2, "$1$2$3" + baseurl + "$4$5");
+                    $("#flash").html($("#flash").html() + 'data: ' + data + '<br>');
                 }, onerror);
             }
         }

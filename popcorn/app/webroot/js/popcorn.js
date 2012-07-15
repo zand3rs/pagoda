@@ -7,7 +7,7 @@
 
     var fs = null;
 
-    function fsEerrorHandler(e, onerror) {
+    function fsErrorHandler(e, onerror) {
         var error = '';
 
         switch (e.code) {
@@ -34,12 +34,65 @@
         if (onerror) onerror(error);
     }
 
+    function fsSave(file_entry, data, onend, onerror) {
+        file_entry.createWriter(function(file_writer) {
+            file_writer.onwriteend = function(e) {
+                if (onend) {
+                    onend(fpath);
+                }
+            };
+            file_writer.onerror = function(e) {
+                if (onerror) {
+                    onerror('Write failed: ' + e.toString());
+                }
+            };
+
+            try {
+                var bb = new obj.BlobBuilder();
+                bb.append(data);
+                file_writer.write(bb.getBlob());
+            } catch (e) {
+                if (onerror) {
+                    onerror('Write failed: ' + e.toString());
+                }
+            }
+        }, function(e) {
+            fsErrorHandler(e, onerror);
+        });
+    }
+
+    function fsResolveUrls(file_entry) {
+        var fname = file_entry.name;
+        var file_supported = fname.match(/\.(htm|css)/);
+        if (!file_supported) {
+            return;
+        }
+
+        function _onend(data) {
+            var blobURL = file_entry.toURL();
+            var baseURL = dirname(blobURL).replace(/\/$/, '') + '/';
+            var regex = /(href|src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
+
+            data = data.replace(regex, "$1$2$3" + baseURL + "$4$5");
+            fsSave(file_entry, data);
+        }
+        file_entry.file(function(file) {
+            var reader = new FileReader(); 
+            reader.onloadend = function(e) {
+                _onend(this.result);
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    //==========================================================================
+
     function initialize(onerror) {
         //obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
         obj.requestFileSystem(obj.TEMPORARY, 4*1024*1024, function(filesystem) {
             fs = filesystem;
         }, function(e) {
-            fsEerrorHandler(e, onerror);
+            fsErrorHandler(e, onerror);
         });
     }
 
@@ -57,7 +110,24 @@
             //-- Recursively add the new subfolder...
             createDir(dir_entry, folders, onend, onerror);
         }, function(e) {
-            fsEerrorHandler(e, onerror);
+            fsErrorHandler(e, onerror);
+        });
+    }
+
+    function deleteFolder(folder, onend, onerror) {
+        if (! fs) {
+            return onerror('File system unavailable!');
+        }
+        fs.root.getDirectory(folder, {}, function(dir_entry) {
+            dir_entry.removeRecursively(function() {
+                if (onend) {
+                    onend('Directory removed.');
+                }
+            }, function(e) {
+                fsErrorHandler(e, onerror);
+            });
+        }, function(e) {
+            fsErrorHandler(e, onerror);
         });
     }
 
@@ -76,31 +146,14 @@
             dir_entry.getFile(file, {create: true}, function(file_entry) {
                 onend(file_entry);
             }, function(e) {
-                fsEerrorHandler(e, onerror);
+                fsErrorHandler(e, onerror);
             });
         }, onerror);
     }
 
     function saveAs(fpath, data, onend, onerror) {
         createFile(fpath, function(file_entry) {
-            file_entry.createWriter(function(file_writer) {
-                file_writer.onwriteend = function(e) {
-                    onend(fpath);
-                };
-                file_writer.onerror = function(e) {
-                    onerror('Write failed: ' + e.toString());
-                };
-
-                try {
-                    var bb = new obj.BlobBuilder();
-                    bb.append(data);
-                    file_writer.write(bb.getBlob());
-                } catch (e) {
-                    onerror('Write failed: ' + e.toString());
-                }
-            }, function(e) {
-                fsEerrorHandler(e, onerror);
-            });
+            fsSave(file_entry, data, onend, onerror);
         }, onerror);
     }
 
@@ -108,7 +161,7 @@
         fs.root.getFile(fpath, {create: false}, function(file_entry) {
             onend(file_entry);
         }, function(e) {
-            fsEerrorHandler(e, onerror);
+            fsErrorHandler(e, onerror);
         });
     }
 
@@ -167,8 +220,13 @@
                     zip_reader.getEntries(function(entries) {
                         var total_files = entries.length;
                         var file_count = 0;
-                        function onprogress() {
+                        function _onprogress(file_entry) {
+                            //fsResolveUrls(file_entry);
+
                             file_count++;
+                            if (onprogress) {
+                                onprogress(file_count, total_files);
+                            }
                             if (file_count >= total_files) {
                                 onend(fpath);
                             }
@@ -180,14 +238,14 @@
                                 entry.getData(writer, function(blob) {
                                     //var blobURL = file_entry.toURL();
                                     //onend(blobURL);
-                                    onprogress();
+                                    _onprogress(file_entry);
                                 });
                             });
                         });
                     });
                 }, onerror);
             }, function(e) {
-                fsEerrorHandler(e, onerror);
+                fsErrorHandler(e, onerror);
             });
         }, onerror);
     }
@@ -213,7 +271,7 @@
                 };
                 reader.readAsText(file);
             }, function(e) {
-                fsEerrorHandler(e, onerror);
+                fsErrorHandler(e, onerror);
             });
         }, onerror);
     }
@@ -228,6 +286,7 @@
         basename       : basename,
         dirname        : dirname,
         getFsUrl       : getFsUrl,
+        deleteFolder   : deleteFolder,
         readFileAsText : readFileAsText
     };
 
