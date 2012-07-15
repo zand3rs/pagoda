@@ -111,17 +111,17 @@
                     var bookmark = val.Bookmark;
                     bookmarks.push(bookmark);
 
+                    /*
                     popcorn.getFsUrl(bookmark.local_path, function(url) {
                         var bookmarksHtml = (url)
                             ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
                             : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
                         $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
                     });
+                    */
 
-                    /*
                     var bookmarksHtml = "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
                     $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
-                    */
                 });
         }, 'json');
     }

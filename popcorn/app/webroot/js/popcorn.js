@@ -34,6 +34,32 @@
         if (onerror) onerror(error);
     }
 
+    function fsTruncate(file_entry, onend, onerror) {
+        file_entry.createWriter(function(file_writer) {
+            file_writer.onwriteend = function(e) {
+                if (onend) {
+                    onend('File ' + file_entry.name + ' truncated.');
+                }
+            };
+            file_writer.onerror = function(e) {
+                if (onerror) {
+                    onerror('Write failed: ' + e.toString());
+                }
+            };
+
+            try {
+                file_writer.seek(0);
+                file_writer.truncate(0);
+            } catch (e) {
+                if (onerror) {
+                    onerror('Write failed: ' + e.toString());
+                }
+            }
+        }, function(e) {
+            fsErrorHandler(e, onerror);
+        });
+    }
+
     function fsSave(file_entry, data, onend, onerror) {
         file_entry.createWriter(function(file_writer) {
             file_writer.onwriteend = function(e) {
@@ -74,7 +100,9 @@
             var regex = /(href|src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
 
             data = data.replace(regex, "$1$2$3" + baseURL + "$4$5");
-            fsSave(file_entry, data);
+            fsTruncate(file_entry, function(msg) {
+                fsSave(file_entry, data);
+            }, onerror);
         }
         file_entry.file(function(file) {
             var reader = new FileReader(); 
@@ -149,7 +177,9 @@
 
         createFolder(folders, function(dir_entry) {
             dir_entry.getFile(file, {create: true}, function(file_entry) {
-                onend(file_entry);
+                fsTruncate(file_entry, function(msg) {
+                    onend(file_entry);
+                }, onerror);
             }, function(e) {
                 fsErrorHandler(e, onerror);
             });
