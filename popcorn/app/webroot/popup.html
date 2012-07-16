@@ -38,13 +38,12 @@
 
     //-------------------------------------------------------------------------
 
-    function getActiveUser() {
+    function getActiveUser(onend) {
         var app_url = host + '/users/getActiveUser';
 
         $.get(app_url, function(data) {
             if (data && data.id) {
-                activeUser = data;
-                userDir = activeUser ? strPad(activeUser.id, 10) : '.';
+                onend(data);
             }
         }, 'json');
     }
@@ -104,26 +103,41 @@
 
     //-------------------------------------------------------------------------
 
+    function getBookmarks(onend) {
+        var app_url = host + '/bookmarks/get_all';
+
+        function parseData(data) {
+            var my_bookmarks = new Array();
+            $.each(data, function(key, val) {
+                var bookmark = val.Bookmark;
+                my_bookmarks.push(bookmark);
+            });
+            onend(my_bookmarks);
+        }
+
+        $.get(app_url, function(data) {
+            //popcorn.saveAs();
+            parseData(data);
+        }, 'json');
+    }
+
+    //-------------------------------------------------------------------------
+
     function showBookmarks() {
         var app_url = host + '/bookmarks/get_all';
-        $.get(app_url, function(data) {
-                $.each(data, function(key, val) {
-                    var bookmark = val.Bookmark;
-                    bookmarks.push(bookmark);
 
-                    /*
-                    popcorn.getFsUrl(bookmark.local_path, function(url) {
-                        var bookmarksHtml = (url)
-                            ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
-                            : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                        $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
-                    });
-                    */
-
-                    var bookmarksHtml = "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+        getBookmarks(function(my_bookmarks) {
+            bookmarks = my_bookmarks;
+            $.each(bookmarks, function(key, val) {
+                var bookmark = val;
+                popcorn.getFsUrl(bookmark.local_path, function(url) {
+                    var bookmarksHtml = (url)
+                        ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
+                        : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
                     $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
                 });
-        }, 'json');
+            });
+        });
     }
 
     //-------------------------------------------------------------------------
@@ -160,8 +174,11 @@
     //-------------------------------------------------------------------------
 
     $(document).ready(function() {
-        //getActiveUser();
-        showBookmarks();
+        getActiveUser(function(user) {
+            activeUser = user;
+            userDir = activeUser ? strPad(activeUser.id, 10) : '.';
+            showBookmarks();
+        });
 
         $("#add-bookmark").click(function() {
             chrome.tabs.getSelected(null, function(tab) {

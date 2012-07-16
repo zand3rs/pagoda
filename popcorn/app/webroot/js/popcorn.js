@@ -322,7 +322,8 @@
         dirname        : dirname,
         getFsUrl       : getFsUrl,
         deleteFolder   : deleteFolder,
-        readFileAsText : readFileAsText
+        readFileAsText : readFileAsText,
+        saveAs         : saveAs
     };
 
 })(this);
