@@ -7,6 +7,9 @@
 
     var fs = null;
 
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+
     function fsErrorHandler(e, onerror) {
         var error = '';
 
@@ -34,6 +37,8 @@
         if (onerror) onerror(error);
     }
 
+    //--------------------------------------------------------------------------
+
     function fsTruncate(file_entry, onend, onerror) {
         file_entry.createWriter(function(file_writer) {
             file_writer.onwriteend = function(e) {
@@ -59,6 +64,8 @@
             fsErrorHandler(e, onerror);
         });
     }
+
+    //--------------------------------------------------------------------------
 
     function fsSave(file_entry, data, onend, onerror) {
         file_entry.createWriter(function(file_writer) {
@@ -87,6 +94,8 @@
         });
     }
 
+    //--------------------------------------------------------------------------
+
     function fsResolveUrls(file_entry) {
         var fname = file_entry.name;
         var file_supported = fname.match(/\.(htm|css)/);
@@ -113,7 +122,8 @@
         });
     }
 
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
     function initialize(onerror) {
         zip.workerScriptsPath = "js/zip/";
@@ -125,6 +135,8 @@
             fsErrorHandler(e, onerror);
         });
     }
+
+    //--------------------------------------------------------------------------
 
     function createDir(root_dir_entry, folders, onend, onerror) {
         if (folders[0] == '.' || folders[0] == '') {
@@ -143,6 +155,8 @@
             fsErrorHandler(e, onerror);
         });
     }
+
+    //--------------------------------------------------------------------------
 
     function deleteFolder(folder, onend, onerror) {
         if (! fs) {
@@ -164,12 +178,16 @@
         });
     }
 
+    //--------------------------------------------------------------------------
+
     function createFolder(folders, onend, onerror) {
         if (! fs) {
             return onerror('File system unavailable!');
         }
         createDir(fs.root, folders, onend, onerror);
     }
+
+    //--------------------------------------------------------------------------
 
     function createFile(fpath, onend, onerror) {
         var folders = fpath.split('/');
@@ -186,11 +204,15 @@
         }, onerror);
     }
 
+    //--------------------------------------------------------------------------
+
     function saveAs(fpath, data, onend, onerror) {
         createFile(fpath, function(file_entry) {
             fsSave(file_entry, data, onend, onerror);
         }, onerror);
     }
+
+    //--------------------------------------------------------------------------
 
     function getFile(fpath, onend, onerror) {
         fs.root.getFile(fpath, {create: false}, function(file_entry) {
@@ -200,6 +222,8 @@
         });
     }
 
+    //--------------------------------------------------------------------------
+
     function fileExists(fpath, onend) {
         getFile(fpath, function(file_entry) {
             onend(true);
@@ -208,19 +232,27 @@
         });
     }
 
+    //--------------------------------------------------------------------------
+
     function basename(path) {
         return path.replace(/.*\//, '');
     }
 
+    //--------------------------------------------------------------------------
+
     function dirname(path) {
         return path.replace(/\/[^\/]*$/, '');
     }
+
+    //--------------------------------------------------------------------------
 
     function getFilePath(url, folder) {
         var fname = basename(url);
         var fpath = (folder || '.') + '/' + fname;
         return fpath;
     }
+
+    //--------------------------------------------------------------------------
 
     function download(url, folder, onend, onerror) {
         try {
@@ -237,6 +269,8 @@
         }
     }
 
+    //--------------------------------------------------------------------------
+
     function cached_download(url, folder, onend, onerror) {
         var fpath = getFilePath(url, folder);
         fileExists(fpath, function(exists) {
@@ -247,6 +281,8 @@
             }
         });
     }
+
+    //--------------------------------------------------------------------------
 
     function extract(fpath, folder, onend, onerror, onprogress) {
         getFile(fpath, function(file_entry) {
@@ -285,17 +321,23 @@
         }, onerror);
     }
 
+    //--------------------------------------------------------------------------
+
     function getFsUrl(fpath, onend) {
         getFile(fpath, function(file_entry) {
             onend(file_entry.toURL());
         });
     }
 
+    //--------------------------------------------------------------------------
+
     function resolveFsUrl(url, onend) {
         obj.resolveLocalFileSystemURL(url, function(file_entry) {
             onend(file_entry);
         });
     }
+
+    //--------------------------------------------------------------------------
 
     function readFileAsText(fpath, onend, onerror) {
         getFile(fpath, function(file_entry) {
@@ -310,6 +352,9 @@
             });
         }, onerror);
     }
+
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
     obj.popcorn = {
         test : function(onend) {
