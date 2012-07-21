@@ -3,6 +3,7 @@
     <link rel="stylesheet" type="text/css" href="css/popcorn.css"/>
     <script src="js/jquery.min.js"></script>
     <script src="js/popcorn.js"></script>
+    <script src="js/popcorn_api.js"></script>
     <script src="js/zip/zip.js"></script>
 
     <script>
@@ -10,120 +11,55 @@
     //-------------------------------------------------------------------------
 
     var host = 'http://localhost/~zander/popcorn';
-    var activeUser = null;
-    var userDir = null;
     var bookmarks = new Array();
 
     //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
-    function strPad(i,l,s) {
-        var o = i.toString();
-        if (!s) { s = '0'; }
-        while (o.length < l) {
-            o = s + o;
-        }
-        return o;
+    function setFlash(msg, append) {
+        var message = (append) ? $("#flash").html() + '<br>' : '';
+            message += msg;
+        $("#flash").html(message);
     }
 
     //-------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
 
-    function onerror(message) {
-        $("#flash").html('ERROR: ' + message + '<br>');
+    function onerror(msg) {
+        setFlash('ERROR: ' + msg);
     }
 
     //-------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
-
-    function getActiveUser(onend) {
-        var app_url = host + '/users/getActiveUser';
-
-        $.get(app_url, function(data) {
-            if (data && data.id) {
-                onend(data);
-            }
-        }, 'json');
-    }
-
     //-------------------------------------------------------------------------
 
     function downloadBookmark(id) {
-        $("#flash").html($("#flash").html() + 'bookmarks: ' + JSON.stringify(bookmarks) + '<br>');
+        setFlash('bookmarks: ' + JSON.stringify(bookmarks), true);
+
         for (var i in bookmarks) {
             var bookmark = bookmarks[i];
             if (id == bookmark.id && bookmark.archive) {
                 var url = host + bookmark.archive;
                 var dest_dir = popcorn.dirname(bookmark.archive);
                 var index = bookmark.local_path;
-                $("#flash").html($("#flash").html() + 'download dest_dir: ' + dest_dir + '<br>');
 
-                /*
-                popcorn.deleteFolder(dest_dir, function(msg) {
-                    $("#flash").html($("#flash").html() + 'deleteFolder: ' + msg + '<br>');
-                }, onerror);
-                */
+                setFlash('download dest_dir: ' + dest_dir, true);
 
                 popcorn.download(url, dest_dir, function(fpath) {
-                    $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
+                    setFlash('download successful: ' + fpath, true);
                     popcorn.extract(fpath, dest_dir, function(fpath) {
-                        $("#flash").html($("#flash").html() + 'extract successful: ' + fpath + '<br>');
+                        setFlash('extract successful: ' + fpath, true);
                         popcorn.getFsUrl(index, function(url) {
-                            $("#flash").html($("#flash").html() + 'index: ' + url + '<br>');
+                            setFlash('index: ' + url, true);
                         });
                     }, onerror);
                 }, onerror);
-
-                /*
-                popcorn.readFileAsText(index, function(data) {
-                    var baseurl = 'filesystem:http://localhost/temporary/files/0000000001/91618313efc8ebe404680d6b00f81b50/';
-                    var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
-                    var out = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
-                    $("#flash").html($("#flash").html() + 'data: ' + out + '<br>');
-                }, onerror);
-                */
-
-                /*
-                popcorn.readFileAsText(index, function(data) {
-                    var baseurl = 'filesystem:http://localhost/temporary/files/0000000001/91618313efc8ebe404680d6b00f81b50/';
-                    var regex = /(href|src)( *= *)(['"])([^'"]*)(['"])/g;
-                    var regex1 = /(href)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/g;
-                    var regex2 = /(src)( *= *)(['"])(?!https?:\/\/|\/\/)([^'"]*)(['"])/;
-                    //var out = data.replace(regex1, "$1$2$3" + baseurl + "$4$5");
-                        //out = out.replace(regex2, "$1$2$3" + baseurl + "$4$5");
-                    data = data.replace(regex, "$1$2$3" + baseurl + "$4$5");
-                    $("#flash").html($("#flash").html() + 'data: ' + data + '<br>');
-                }, onerror);
-                */
             }
         }
     }
 
     //-------------------------------------------------------------------------
 
-    function getBookmarks(onend) {
-        var app_url = host + '/bookmarks/get_all';
-
-        function parseData(data) {
-            var my_bookmarks = new Array();
-            $.each(data, function(key, val) {
-                var bookmark = val.Bookmark;
-                my_bookmarks.push(bookmark);
-            });
-            onend(my_bookmarks);
-        }
-
-        $.get(app_url, function(data) {
-            //popcorn.saveAs();
-            parseData(data);
-        }, 'json');
-    }
-
-    //-------------------------------------------------------------------------
-
     function showBookmarks() {
-        var app_url = host + '/bookmarks/get_all';
-
-        getBookmarks(function(my_bookmarks) {
+        popcorn_api.getBookmarks(function(my_bookmarks) {
             bookmarks = my_bookmarks;
             $.each(bookmarks, function(key, val) {
                 var bookmark = val;
@@ -139,59 +75,27 @@
 
     //-------------------------------------------------------------------------
 
-    function addBookmark(title, url) {
-        var app_url = host + '/bookmarks/save';
-        var dataObj = {
-             Bookmark: {
-                 title: title,
-                 url: url
-             }
-        };
-        var payload = JSON.stringify(dataObj);
-
-        $.ajax({
-            type: 'POST',
-            contentType: 'application/json',
-            processData: false,
-            dataType: 'json',
-            timeout: 60000,
-            url: app_url,
-            data: payload
-        })
-        .success(function(data, textStatus, jqXHR) {
-                })
-        .error(function(jqXHR, textStatus, errorThrown) {
-                })
-        .complete(function(jqXHR, textStatus) {
-                window.close();
+    function initHandlers() {
+        $("#add-bookmark").click(function() {
+            chrome.tabs.getSelected(null, function(tab) {
+                popcorn_api.addBookmark(tab.title, tab.url);
                 });
-
+            });
     }
 
     //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
     $(document).ready(function() {
-        getActiveUser(function(user) {
-            activeUser = user;
-            userDir = activeUser ? strPad(activeUser.id, 10) : '.';
-            showBookmarks();
-        });
-
-        $("#add-bookmark").click(function() {
-            chrome.tabs.getSelected(null, function(tab) {
-                addBookmark(tab.title, tab.url);
-                });
-            });
-
-        /*
-        popcorn.test(function(msg) {
-            $("#flash").html($("#flash").html() + 'test: ' + msg + '<br>');
-        });
-        */
-
+        popcorn_api.initialize({"host": host});
         popcorn.initialize(onerror);
 
+        initHandlers();
+        showBookmarks();
     });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     </script>
 </head>
 

@@ -1,20 +1,20 @@
 (function(obj) {
 
-    var host = "";
+    var _host = "";
 
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
     function initialize(params) {
         if (params) {
-            host = params.host || "";
+            _host = params.host || "";
         }
     }
 
     //--------------------------------------------------------------------------
 
     function getActiveUser(onend) {
-        var req_url = host + '/users/getActiveUser';
+        var req_url = _host + '/users/getActiveUser';
 
         $.get(req_url, function(data) {
             if (data && data.id) {
@@ -26,14 +26,16 @@
     //--------------------------------------------------------------------------
 
     function getBookmarks(onend) {
-        var req_url = host + '/bookmarks/get_all';
+        var req_url = _host + '/bookmarks/get_all';
 
         function parseData(data) {
             var bookmarks = new Array();
-            $.each(data, function(key, val) {
-                var bookmark = val.Bookmark;
-                bookmarks.push(bookmark);
-            });
+            if (data) {
+                $.each(data, function(key, val) {
+                    var bookmark = val.Bookmark;
+                    bookmarks.push(bookmark);
+                });
+            }
             onend(bookmarks);
         }
 
@@ -45,7 +47,7 @@
     //--------------------------------------------------------------------------
 
     function addBookmark(title, url, onend) {
-        var req_url = host + '/bookmarks/save';
+        var req_url = _host + '/bookmarks/save';
         var dataObj = {
              Bookmark: {
                  title: title,
