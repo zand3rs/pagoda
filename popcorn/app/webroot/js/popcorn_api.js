@@ -13,8 +13,15 @@
 
     //--------------------------------------------------------------------------
 
+    function getResourceURL(resource) {
+        var url = _host + resource;
+        return url;
+    }
+
+    //--------------------------------------------------------------------------
+
     function getActiveUser(onend) {
-        var req_url = _host + '/users/getActiveUser';
+        var req_url = getResourceURL('/users/getActiveUser');
 
         $.get(req_url, function(data) {
             if (data && data.id) {
@@ -26,7 +33,7 @@
     //--------------------------------------------------------------------------
 
     function getBookmarks(onend) {
-        var req_url = _host + '/bookmarks/get_all';
+        var req_url = getResourceURL('/bookmarks/get_all');
 
         function parseData(data) {
             var bookmarks = new Array();
@@ -47,7 +54,7 @@
     //--------------------------------------------------------------------------
 
     function addBookmark(title, url, onend) {
-        var req_url = _host + '/bookmarks/save';
+        var req_url = getResourceURL('/bookmarks/save');
         var dataObj = {
              Bookmark: {
                  title: title,
@@ -80,10 +87,11 @@
     //--------------------------------------------------------------------------
 
     obj.popcorn_api = {
-        initialize    : initialize,
-        getActiveUser : getActiveUser,
-        getBookmarks  : getBookmarks,
-        addBookmark   : addBookmark
+        initialize     : initialize,
+        getResourceURL : getResourceURL,
+        getActiveUser  : getActiveUser,
+        getBookmarks   : getBookmarks,
+        addBookmark    : addBookmark
     };
 
 })(this);

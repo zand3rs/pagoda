@@ -11,7 +11,6 @@
     //-------------------------------------------------------------------------
 
     var host = 'http://localhost/~zander/popcorn';
-    var bookmarks = new Array();
 
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
@@ -31,42 +30,68 @@
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
+    function getStoragePath(fpath) {
+        var storage_path = fpath;
+        return storage_path;
+    }
+
+    //-------------------------------------------------------------------------
+
+    function getBookmarks(onend) {
+        var bookmark_path = getStoragePath('/bookmarks');
+
+        popcorn.readFileAsText(bookmark_path, function(data) {
+            //--- TODO:!!!
+        }, function() {
+            popcorn_api.getBookmarks(function(bookmarks) {
+                var data = JSON.stringify(bookmarks);
+
+                popcorn.saveAs(bookmark_path, data);
+                onend(bookmarks);
+            });
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
     function downloadBookmark(id) {
-        setFlash('bookmarks: ' + JSON.stringify(bookmarks), true);
+        //setFlash('bookmarks: ' + JSON.stringify(bookmarks), true);
 
-        for (var i in bookmarks) {
-            var bookmark = bookmarks[i];
-            if (id == bookmark.id && bookmark.archive) {
-                var url = host + bookmark.archive;
-                var dest_dir = popcorn.dirname(bookmark.archive);
-                var index = bookmark.local_path;
+        getBookmarks(function(bookmarks) {
+            for (var i in bookmarks) {
+                var bookmark = bookmarks[i];
+                if (id == bookmark.id && bookmark.archive) {
+                    var url = popcorn_api.getResourceURL(bookmark.archive);
+                    var dest_dir = popcorn.dirname(bookmark.archive);
+                    var index = bookmark.local_path;
 
-                setFlash('download dest_dir: ' + dest_dir, true);
+                    setFlash('download dest_dir: ' + dest_dir, true);
 
-                popcorn.download(url, dest_dir, function(fpath) {
-                    setFlash('download successful: ' + fpath, true);
-                    popcorn.extract(fpath, dest_dir, function(fpath) {
-                        setFlash('extract successful: ' + fpath, true);
-                        popcorn.getFsUrl(index, function(url) {
-                            setFlash('index: ' + url, true);
-                        });
+                    popcorn.download(url, dest_dir, function(fpath) {
+                        setFlash('download successful: ' + fpath, true);
+                        popcorn.extract(fpath, dest_dir, function(fpath) {
+                            setFlash('extract successful: ' + fpath, true);
+                            popcorn.getFsUrl(index, function(url) {
+                                setFlash('index: ' + url, true);
+                            });
+                        }, onerror);
                     }, onerror);
-                }, onerror);
+                }
             }
-        }
+        });
     }
 
     //-------------------------------------------------------------------------
 
     function showBookmarks() {
-        popcorn_api.getBookmarks(function(my_bookmarks) {
-            bookmarks = my_bookmarks;
+        getBookmarks(function(bookmarks) {
             $.each(bookmarks, function(key, val) {
                 var bookmark = val;
                 popcorn.getFsUrl(bookmark.local_path, function(url) {
-                    var bookmarksHtml = (url)
-                        ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
-                        : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                    //var bookmarksHtml = (url)
+                    //    ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
+                    //    : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                    var bookmarksHtml = "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
                     $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
                 });
             });
