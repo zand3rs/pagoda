@@ -199,6 +199,25 @@
 
     //--------------------------------------------------------------------------
 
+    function deleteFile(fpath, onend, onerror) {
+        if (! fs) {
+            return onerror ? onerror('File system unavailable!') : false;
+        }
+        fs.root.getFile(fpath, {create: false}, function(file_entry) {
+            file_entry.remove(function() {
+                if (onend) {
+                    onend('File ' + fpath + ' removed.');
+                }
+            }, function(e) {
+                fsErrorHandler(e, onerror);
+            });
+        }, function(e) {
+            fsErrorHandler(e, onerror);
+        });
+    }
+
+    //--------------------------------------------------------------------------
+
     function createFile(fpath, onend, onerror) {
         var folders = fpath.split('/');
         var file = folders.pop();
@@ -380,6 +399,7 @@
         dirname        : dirname,
         getFsUrl       : getFsUrl,
         deleteFolder   : deleteFolder,
+        deleteFile     : deleteFile,
         readFileAsText : readFileAsText,
         saveAs         : saveAs,
         strPad         : strPad
