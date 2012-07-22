@@ -8,6 +8,18 @@
     var fs = null;
 
     //--------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    function strPad(i,l,s) {
+        var o = i.toString();
+        if (!s) { s = '0'; }
+        while (o.length < l) {
+            o = s + o;
+        }
+        return o;
+    }
+
+    //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
     function fsErrorHandler(e, onerror) {
@@ -125,12 +137,13 @@
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
-    function initialize(onerror) {
+    function initialize(onend, onerror) {
         zip.workerScriptsPath = "js/zip/";
 
         //obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
         obj.requestFileSystem(obj.TEMPORARY, 4*1024*1024, function(filesystem) {
             fs = filesystem;
+            onend();
         }, function(e) {
             fsErrorHandler(e, onerror);
         });
@@ -160,10 +173,7 @@
 
     function deleteFolder(folder, onend, onerror) {
         if (! fs) {
-            if (onerror) {
-                onerror('File system unavailable!');
-            }
-            return;
+            return onerror ? onerror('File system unavailable!') : false;
         }
         fs.root.getDirectory(folder, {}, function(dir_entry) {
             dir_entry.removeRecursively(function() {
@@ -182,7 +192,7 @@
 
     function createFolder(folders, onend, onerror) {
         if (! fs) {
-            return onerror('File system unavailable!');
+            return onerror ? onerror('File system unavailable!') : false;
         }
         createDir(fs.root, folders, onend, onerror);
     }
@@ -215,6 +225,9 @@
     //--------------------------------------------------------------------------
 
     function getFile(fpath, onend, onerror) {
+        if (! fs) {
+            return onerror ? onerror('File system unavailable!') : false;
+        }
         fs.root.getFile(fpath, {create: false}, function(file_entry) {
             onend(file_entry);
         }, function(e) {
@@ -368,7 +381,8 @@
         getFsUrl       : getFsUrl,
         deleteFolder   : deleteFolder,
         readFileAsText : readFileAsText,
-        saveAs         : saveAs
+        saveAs         : saveAs,
+        strPad         : strPad
     };
 
 })(this);

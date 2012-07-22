@@ -23,7 +23,7 @@
 
     //-------------------------------------------------------------------------
 
-    function onerror(msg) {
+    function onError(msg) {
         setFlash('ERROR: ' + msg);
     }
 
@@ -31,7 +31,8 @@
     //-------------------------------------------------------------------------
 
     function getStoragePath(fpath) {
-        var storage_path = fpath;
+        var user_dir = popcorn.strPad(1, 10);
+        var storage_path = user_dir + fpath;
         return storage_path;
     }
 
@@ -40,23 +41,25 @@
     function getBookmarks(onend) {
         var bookmark_path = getStoragePath('/bookmarks');
 
-        popcorn.readFileAsText(bookmark_path, function(data) {
-            //--- TODO:!!!
-        }, function() {
+        function _getBookmarks() {
             popcorn_api.getBookmarks(function(bookmarks) {
-                var data = JSON.stringify(bookmarks);
-
-                popcorn.saveAs(bookmark_path, data);
+                if (bookmarks.length > 0) {
+                    var data = JSON.stringify(bookmarks);
+                    popcorn.saveAs(bookmark_path, data);
+                }
                 onend(bookmarks);
             });
-        });
+        }
+
+        popcorn.readFileAsText(bookmark_path, function(data) {
+            var bookmarks = JSON.parse(data);
+            onend(bookmarks);
+        }, _getBookmarks);
     }
 
     //-------------------------------------------------------------------------
 
     function downloadBookmark(id) {
-        //setFlash('bookmarks: ' + JSON.stringify(bookmarks), true);
-
         getBookmarks(function(bookmarks) {
             for (var i in bookmarks) {
                 var bookmark = bookmarks[i];
@@ -74,8 +77,8 @@
                             popcorn.getFsUrl(index, function(url) {
                                 setFlash('index: ' + url, true);
                             });
-                        }, onerror);
-                    }, onerror);
+                        }, onError);
+                    }, onError);
                 }
             }
         });
@@ -113,10 +116,10 @@
 
     $(document).ready(function() {
         popcorn_api.initialize({"host": host});
-        popcorn.initialize(onerror);
-
-        initHandlers();
-        showBookmarks();
+        popcorn.initialize(function() {
+            initHandlers();
+            showBookmarks();
+        }, onError);
     });
 
     //-------------------------------------------------------------------------
