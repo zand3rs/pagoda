@@ -30,9 +30,12 @@
     //-------------------------------------------------------------------------
 
     function setFlash(msg, append) {
-        var message = (append) ? $("#flash").html() : '';
-            message += msg + '<br>';
-        $("#flash").html(message);
+        var message = msg + '<br>';
+        if (append) {
+            $("#flash").append(message);
+        } else {
+            $("#flash").html(message);
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -277,6 +280,16 @@
 
     //-------------------------------------------------------------------------
 
+    function initDisplay() {
+        var login_url = popcorn_api.getLoginURL();
+        console_log('login_url: ' + login_url);
+
+        $("#login").prop("href", login_url);
+        $("#login").hide();
+    }
+
+    //-------------------------------------------------------------------------
+
     function doBackground() {
         verifyBookmarksChecksum();
     }
@@ -286,12 +299,17 @@
     function initialize(onend) {
         function _onend() {
             getActiveUser(function(user) {
+                console_log('initialize: user: ' + JSON.stringify(user));
                 if (user) {
                     activeUser = user;
                     onend();
+                } else {
+                    $("#login").show();
                 }
             });
         }
+
+        initDisplay();
 
         if (CONFIG.clean_root) {
             cleanRootFolder(_onend);
@@ -322,11 +340,10 @@
 <body>
     <div id="action">
         <button id="add-bookmark">Add Bookmark</button>
-        <button id="login">Log In</button>
+        <a id="login" href="#" target="_blank">Log In</a>
     </div>
     <hr>
     <div id="flash"></div>
     <div id="bookmarks"></div>
-    <div id="filelist"></div>
 </body>
 </html>

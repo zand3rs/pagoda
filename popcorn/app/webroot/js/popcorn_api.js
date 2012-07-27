@@ -2,6 +2,14 @@
 
     var _host = "";
 
+    var _resources = {
+        login          : '/users/login',
+        logout         : '/users/logout',
+        user           : '/users/getActiveUser',
+        bookmarks      : '/bookmarks/get_all',
+        add_bookmark   : '/bookmarks/save'
+    }
+
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
@@ -20,8 +28,15 @@
 
     //--------------------------------------------------------------------------
 
+    function getLoginURL() {
+        var url = _host + _resources.login;
+        return url;
+    }
+
+    //--------------------------------------------------------------------------
+
     function getActiveUser(onend) {
-        var req_url = getResourceURL('/users/getActiveUser');
+        var req_url = getResourceURL(_resources.user);
 
         $.get(req_url, function(data) {
             onend(data);
@@ -34,7 +49,7 @@
     //--------------------------------------------------------------------------
 
     function getBookmarks(onend) {
-        var req_url = getResourceURL('/bookmarks/get_all');
+        var req_url = getResourceURL(_resources.bookmarks);
 
         function parseData(data) {
             var bookmarks = new Array();
@@ -55,7 +70,8 @@
     //--------------------------------------------------------------------------
 
     function addBookmark(title, url, onend) {
-        var req_url = getResourceURL('/bookmarks/save');
+        var req_url = getResourceURL(_resources.add_bookmark);
+
         var dataObj = {
              Bookmark: {
                  title: title,
@@ -90,6 +106,7 @@
     obj.popcorn_api = {
         initialize     : initialize,
         getResourceURL : getResourceURL,
+        getLoginURL    : getLoginURL,
         getActiveUser  : getActiveUser,
         getBookmarks   : getBookmarks,
         addBookmark    : addBookmark
