@@ -76,5 +76,5 @@ CakePlugin::loadAll(array(
 Configure::write('OAuth2.clientId', '1063125973669.apps.googleusercontent.com');
 Configure::write('OAuth2.clientSecret', 'QXzI7I-zCNO7R9WACN7Z5QKr');
 
-Configure::write('UPLOAD_ROOT', '/files');
+Configure::write('UPLOAD_ROOT', '/popcorn');
 

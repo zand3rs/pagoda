@@ -83,7 +83,8 @@
         file_entry.createWriter(function(file_writer) {
             file_writer.onwriteend = function(e) {
                 if (onend) {
-                    onend(file_entry.name);
+                    //onend(file_entry.name);
+                    onend(file_entry.fullPath);
                 }
             };
             file_writer.onerror = function(e) {
@@ -355,10 +356,10 @@
 
     //--------------------------------------------------------------------------
 
-    function getFsUrl(fpath, onend) {
+    function getFsUrl(fpath, onend, onerror) {
         getFile(fpath, function(file_entry) {
             onend(file_entry.toURL());
-        });
+        }, onerror);
     }
 
     //--------------------------------------------------------------------------

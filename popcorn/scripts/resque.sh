@@ -6,7 +6,8 @@ case $1 in
         DIR=`dirname $0`
 
         cd "$DIR/../app/"
-        sudo -u _www Console/cake Resque.resque $1
+        #sudo -u _www Console/cake Resque.resque $1
+        Console/cake Resque.resque $1
         cd $PWD
         ;;
     *)

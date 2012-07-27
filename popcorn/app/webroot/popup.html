@@ -11,13 +11,16 @@
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
-    var host = 'http://localhost/~zander/popcorn';
-    var bookmarks_dirty = false;
+    var CONFIG = {
+        host       : 'http://localhost/~zander/popcorn',
+        clean_root : false,
+        enable_log : true
+    }
 
     var POPCORN_PATH = {
         root          : '/popcorn',
-        bookmarks_sig : '/bookmarks_sig',
-        bookmarks     : '/bookmarks'
+        bookmarks     : '/bookmarks',
+        bookmarks_cs  : '/bookmarks_cs'
     }
 
     //-------------------------------------------------------------------------
@@ -36,6 +39,14 @@
     }
 
     //-------------------------------------------------------------------------
+
+    function console_log(msg) {
+        if (CONFIG.enable_log) {
+            console.log(msg);
+        }
+    }
+
+    //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
     function getStoragePath(fpath) {
@@ -46,15 +57,31 @@
 
     //-------------------------------------------------------------------------
 
-    function getBookmarksSig(onend) {
-        var fpath = getStoragePath(POPCORN_PATH.bookmarks_sig);
-        console.log('getBookmarksSig: fpath: ' + fpath);
+    function cleanRootFolder(onend) {
+        popcorn.deleteFolder(POPCORN_PATH.root, function(msg) {
+            console_log('cleanRootFolder: ' + msg);
+            if (onend) {
+                onend(msg);
+            }
+        }, function(e) {
+            console_log('cleanRootFolder error: ' + e);
+            if (onend) {
+                onend(e);
+            }
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function getBookmarksChecksum(onend) {
+        var fpath = getStoragePath(POPCORN_PATH.bookmarks_cs);
+        console_log('getBookmarksChecksum: fpath: ' + fpath);
 
         popcorn.readFileAsText(fpath, function(data) {
-            var bookmarksig = data;
-            onend(bookmarksig);
+            var bookmarks_cs = data;
+            onend(bookmarks_cs);
         }, function(msg) {
-            console.log('getBookmarksSig: ' + msg);
+            console_log('getBookmarksChecksum: ' + msg);
             onend('')
         });
     }
@@ -63,19 +90,17 @@
 
     function getBookmarks(onend) {
         var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
-        var bookmarksig_path = getStoragePath(POPCORN_PATH.bookmarks_sig);
+        var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
 
         function _getBookmarks() {
             popcorn_api.getBookmarks(function(bookmarks) {
                 if (bookmarks.length > 0) {
                     var data = JSON.stringify(bookmarks);
-                    var data_sig = $.md5(data);
+                    var data_cs = $.md5(data);
 
-                    console.log('popcorn_api.getBookmarks: data: ' + data);
+                    console_log('popcorn_api.getBookmarks: data: ' + data);
                     popcorn.saveAs(bookmarks_path, data);
-                    popcorn.saveAs(bookmarksig_path, data_sig, function(msg) {
-                        console.log('getBookmarks: error: ' + msg);
-                    });
+                    popcorn.saveAs(bookmarks_cs_path, data_cs);
                 }
                 onend(bookmarks);
             });
@@ -91,60 +116,76 @@
 
     //-------------------------------------------------------------------------
 
-    function verifyBookmarksSig() {
+    function verifyBookmarksChecksum() {
         var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
-        var bookmarksig_path = getStoragePath(POPCORN_PATH.bookmarks_sig);
+        var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
 
         popcorn_api.getBookmarks(function(bookmarks) {
             var data = JSON.stringify(bookmarks);
-            var data_sig = $.md5(data);
+            var data_cs = $.md5(data);
 
-            getBookmarksSig(function(sig) {
-                console.log('sig: ' + sig);
-                if (sig != data_sig) {
-                    console.log('data_sig:' + data_sig);
+            getBookmarksChecksum(function(cs) {
+                console_log('checksum: ' + cs);
+                if (cs != data_cs) {
+                    console_log('data_checksum:' + data_cs);
                     popcorn.deleteFile(bookmarks_path, function() {
-                        console.log('file deleted: ' + bookmarks_path);
+                        console_log('file deleted: ' + bookmarks_path);
                     }, function() {
-                        console.log('delete error: ' + bookmarks_path);
-                        //console.log();
+                        console_log('delete error: ' + bookmarks_path);
                     });
 
-                    popcorn.deleteFile(bookmarksig_path, function() {
-                        console.log('file deleted: ' + bookmarksig_path);
+                    popcorn.deleteFile(bookmarks_cs_path, function() {
+                        console_log('file deleted: ' + bookmarks_cs_path);
                     }, function() {
-                        console.log('delete error: ' + bookmarksig_path);
-                        //console.log();
+                        console_log('delete error: ' + bookmarks_cs_path);
                     });
                 }
             });
-        }, function() {
-            //console.log();
+        }, function(e) {
+            console_log('verifyBookmarksChecksum error: ' + e);
         });
     }
 
     //-------------------------------------------------------------------------
 
-    function downloadBookmark(id) {
+    function downloadBookmark(bookmark) {
+        var url = popcorn_api.getResourceURL(bookmark.archive);
+        var dest_dir = popcorn.dirname(bookmark.archive);
+        var index = bookmark.local_path;
+
+        setFlash('Please wait while ' + bookmark.title + ' is being downloaded to your hard drive.');
+
+        popcorn.download(url, dest_dir, function(fpath) {
+            console_log('download successful: ' + fpath);
+            popcorn.extract(fpath, dest_dir, function(fpath) {
+                console_log('extract successful: ' + fpath);
+                popcorn.getFsUrl(index, function(url) {
+                    showBookmarks();
+                    setFlash(bookmark.title + ' was successfully downloaded to your hard drive.');
+                    console_log('index: ' + url);
+                });
+            }, function(e) {
+                onError(e);
+                console_log('extract failed: ' + fpath);
+            });
+        }, onError);
+    }
+
+    //-------------------------------------------------------------------------
+
+    function confirmBookmarkDownload(bookmark_id) {
         getBookmarks(function(bookmarks) {
             for (var i in bookmarks) {
                 var bookmark = bookmarks[i];
-                if (id == bookmark.id && bookmark.archive) {
-                    var url = popcorn_api.getResourceURL(bookmark.archive);
-                    var dest_dir = popcorn.dirname(bookmark.archive);
-                    var index = bookmark.local_path;
-
-                    console.log('download dest_dir: ' + dest_dir);
-
-                    popcorn.download(url, dest_dir, function(fpath) {
-                        console.log('download successful: ' + fpath);
-                        popcorn.extract(fpath, dest_dir, function(fpath) {
-                            console.log('extract successful: ' + fpath);
-                            popcorn.getFsUrl(index, function(url) {
-                                console.log('index: ' + url);
-                            });
-                        }, onError);
-                    }, onError);
+                if (bookmark_id == bookmark.id) {
+                    if (bookmark.archive) {
+                        var msg = "Download " + bookmark.title + " to your hard drive?";
+                        if (confirm(msg)) {
+                            downloadBookmark(bookmark);
+                        }
+                    } else {
+                        setFlash(bookmark.title + ' is not yet available. Please try again in a while.');
+                    }
                 }
             }
         });
@@ -153,15 +194,23 @@
     //-------------------------------------------------------------------------
 
     function showBookmarks() {
+        function _clear() {
+            $('#bookmarks').html('');
+        }
+        function _show(html) {
+            $('#bookmarks').append(html);
+        }
+
         getBookmarks(function(bookmarks) {
+            _clear();
             $.each(bookmarks, function(key, val) {
                 var bookmark = val;
                 popcorn.getFsUrl(bookmark.local_path, function(url) {
-                    //var bookmarksHtml = (url)
-                    //    ? "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>"
-                    //    : "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                    var bookmarksHtml = "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                    $('#bookmarks').html($('#bookmarks').html() + bookmarksHtml);
+                    var bookmarksHtml = "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>";
+                    _show(bookmarksHtml);
+                }, function(e) {
+                    var bookmarksHtml = "<div><a href='javascript:confirmBookmarkDownload(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                    _show(bookmarksHtml);
                 });
             });
         });
@@ -180,18 +229,30 @@
     //-------------------------------------------------------------------------
 
     function doBackground() {
-        verifyBookmarksSig();
+        verifyBookmarksChecksum();
+    }
+
+    //-------------------------------------------------------------------------
+
+    function initialize(onend) {
+        if (CONFIG.clean_root) {
+            cleanRootFolder(onend);
+        } else {
+            onend();
+        }
     }
 
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
     $(document).ready(function() {
-        popcorn_api.initialize({"host": host});
+        popcorn_api.initialize({"host": CONFIG.host});
         popcorn.initialize(function() {
-            initHandlers();
-            showBookmarks();
-            doBackground();
+            initialize(function() {
+                initHandlers();
+                showBookmarks();
+                doBackground();
+            });
         }, onError);
     });
 

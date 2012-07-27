@@ -33,7 +33,7 @@ class Web {
         $pathinfo = pathinfo($url);
         $default_ext = '.html';
         $root_dir = rtrim(WWW_ROOT, DS);
-        $upload_dir = DS.'files';
+        $upload_dir = Configure::read('UPLOAD_ROOT');
         $dest_dir = rtrim($dir, DS);
         $dest_file = $file;
 
