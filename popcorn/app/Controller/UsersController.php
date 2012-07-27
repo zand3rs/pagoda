@@ -73,7 +73,15 @@ class UsersController extends AppController {
     //--------------------------------------------------------------------------
 
     public function getActiveUser() {
-        return json_encode($this->Auth->user());
+        $activeUser = null;
+        $user = $this->Auth->user();
+        if ($user) {
+            $activeUser = array(
+                'id' => $user['id'],
+                'email' => $user['email'],
+            );
+        }
+        return json_encode($activeUser);
     }
 
     //--------------------------------------------------------------------------

@@ -24,10 +24,11 @@
         var req_url = getResourceURL('/users/getActiveUser');
 
         $.get(req_url, function(data) {
-            if (data && data.id) {
-                onend(data);
-            }
-        }, 'json');
+            onend(data);
+        }, 'json')
+        .error(function(jqXHR, textStatus, errorThrown) {
+            onend(null);
+        });
     }
 
     //--------------------------------------------------------------------------
@@ -73,14 +74,14 @@
             data: payload
         })
         .success(function(data, textStatus, jqXHR) {
-            })
+        })
         .error(function(jqXHR, textStatus, errorThrown) {
-            })
+        })
         .complete(function(jqXHR, textStatus) {
-                if (onend) {
-                    onend();
-                }
-            });
+            if (onend) {
+                onend();
+            }
+        });
     }
 
     //--------------------------------------------------------------------------
