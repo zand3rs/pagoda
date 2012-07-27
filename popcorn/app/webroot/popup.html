@@ -14,7 +14,7 @@
     var CONFIG = {
         host       : 'http://localhost/~zander/popcorn',
         clean_root : false,
-        enable_log : true
+        debug      : true
     }
 
     var POPCORN_PATH = {
@@ -41,7 +41,7 @@
     //-------------------------------------------------------------------------
 
     function console_log(msg) {
-        if (CONFIG.enable_log) {
+        if (CONFIG.debug) {
             console.log(msg);
         }
     }
@@ -130,14 +130,14 @@
                     console_log('data_checksum:' + data_cs);
                     popcorn.deleteFile(bookmarks_path, function() {
                         console_log('file deleted: ' + bookmarks_path);
-                    }, function() {
-                        console_log('delete error: ' + bookmarks_path);
+                    }, function(e) {
+                        console_log('delete error: ' + bookmarks_path + ': ' + e);
                     });
 
                     popcorn.deleteFile(bookmarks_cs_path, function() {
                         console_log('file deleted: ' + bookmarks_cs_path);
-                    }, function() {
-                        console_log('delete error: ' + bookmarks_cs_path);
+                    }, function(e) {
+                        console_log('delete error: ' + bookmarks_cs_path + ': ' + e);
                     });
                 }
             });
@@ -221,7 +221,11 @@
     function initHandlers() {
         $("#add-bookmark").click(function() {
             chrome.tabs.getSelected(null, function(tab) {
-                popcorn_api.addBookmark(tab.title, tab.url);
+                popcorn_api.addBookmark(tab.title, tab.url, function() {
+                    if (! CONFIG.debug) {
+                        window.close();
+                    }
+                });
             });
         });
     }
