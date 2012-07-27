@@ -2,148 +2,348 @@
 <head>
     <link rel="stylesheet" type="text/css" href="css/popcorn.css"/>
     <script src="js/jquery.min.js"></script>
+    <script src="js/jquery.md5.js"></script>
     <script src="js/popcorn.js"></script>
+    <script src="js/popcorn_api.js"></script>
     <script src="js/zip/zip.js"></script>
 
     <script>
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
-    zip.workerScriptsPath = "js/zip/";
+    var CONFIG = {
+        host       : 'http://localhost/~zander/popcorn',
+        clean_root : false,
+        debug      : false
+    }
 
-    var host = 'http://localhost/~zander/popcorn';
+    var POPCORN_PATH = {
+        root          : '/popcorn',
+        user          : '/user',
+        bookmarks     : '/bookmarks',
+        bookmarks_cs  : '/bookmarks_cs'
+    }
+
     var activeUser = null;
-    var userDir = null;
 
     //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
-    function strPad(i,l,s) {
-        var o = i.toString();
-        if (!s) { s = '0'; }
-        while (o.length < l) {
-            o = s + o;
+    function setFlash(msg, append) {
+        var message = msg + '<br>';
+        if (append) {
+            $("#flash").append(message);
+        } else {
+            $("#flash").html(message);
         }
-        return o;
+    }
+
+    //-------------------------------------------------------------------------
+
+    function onError(msg) {
+        setFlash('ERROR: ' + msg);
+    }
+
+    //-------------------------------------------------------------------------
+
+    function console_log(msg) {
+        if (CONFIG.debug) {
+            console.log(msg);
+        }
     }
 
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
-    function onerror(message) {
-        $("#flash").html('ERROR: ' + message + '<br>');
-    }
+    function getStoragePath(fpath) {
+        var storage_path = POPCORN_PATH.root;
 
-    //-------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
-
-    var bookmarks = new Array();
-
-    //-------------------------------------------------------------------------
-
-    function getActiveUser() {
-        var app_url = host + '/users/getActiveUser';
-
-        $.get(app_url, function(data) {
-            if (data && data.id) {
-                activeUser = data;
-                userDir = activeUser ? strPad(activeUser.id, 10) : '.';
-            }
-        }, 'json');
-    }
-
-    //-------------------------------------------------------------------------
-
-    function downloadBookmark(id) {
-        for (var i in bookmarks) {
-            var bookmark = bookmarks[i];
-            if (id == bookmark.id && bookmark.archive) {
-                var url = host + bookmark.archive;
-                popcorn.download(url, userDir, function(fpath) {
-                    $("#flash").html($("#flash").html() + 'download successful: ' + fpath + '<br>');
-                }, onerror);
+        if (fpath != POPCORN_PATH.user) {
+            if (activeUser && activeUser.id) {
+                var user_dir = '/' + popcorn.strPad(activeUser.id, 10);
+                storage_path += user_dir;
             }
         }
+        storage_path += fpath;
+
+        return storage_path;
+    }
+
+    //-------------------------------------------------------------------------
+
+    function cleanRootFolder(onend) {
+        popcorn.deleteFolder(POPCORN_PATH.root, function(msg) {
+            console_log('cleanRootFolder: ' + msg);
+            if (onend) {
+                onend(msg);
+            }
+        }, function(e) {
+            console_log('cleanRootFolder error: ' + e);
+            if (onend) {
+                onend(e);
+            }
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function getActiveUser(onend) {
+        var user_path = getStoragePath(POPCORN_PATH.user);
+        console_log('getActiveUser: user_path: ' + user_path);
+
+        function _getUser() {
+            popcorn_api.getActiveUser(function(user) {
+                if (user) {
+                    var data = JSON.stringify(user);
+
+                    console_log('popcorn_api.getActiveUser: data: ' + data);
+                    popcorn.saveAs(user_path, data);
+                }
+                onend(user);
+            });
+        }
+
+        popcorn.readFileAsText(user_path, function(data) {
+            var user = JSON.parse(data);
+            onend(user);
+        }, function() {
+            _getUser();
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function getBookmarksChecksum(onend) {
+        var fpath = getStoragePath(POPCORN_PATH.bookmarks_cs);
+        console_log('getBookmarksChecksum: fpath: ' + fpath);
+
+        popcorn.readFileAsText(fpath, function(data) {
+            var bookmarks_cs = data;
+            onend(bookmarks_cs);
+        }, function(msg) {
+            console_log('getBookmarksChecksum: ' + msg);
+            onend('')
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function getBookmarks(onend) {
+        var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
+        var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
+
+        function _getBookmarks() {
+            popcorn_api.getBookmarks(function(bookmarks) {
+                if (bookmarks.length > 0) {
+                    var data = JSON.stringify(bookmarks);
+                    var data_cs = $.md5(data);
+
+                    console_log('popcorn_api.getBookmarks: data: ' + data);
+                    popcorn.saveAs(bookmarks_path, data);
+                    popcorn.saveAs(bookmarks_cs_path, data_cs);
+                }
+                onend(bookmarks);
+            });
+        }
+
+        popcorn.readFileAsText(bookmarks_path, function(data) {
+            var bookmarks = JSON.parse(data);
+            onend(bookmarks);
+        }, function() {
+            _getBookmarks();
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function verifyBookmarksChecksum() {
+        var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
+        var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
+
+        function _verifyChecksum(bookmarks) {
+            var data = JSON.stringify(bookmarks);
+            var data_cs = $.md5(data);
+
+            getBookmarksChecksum(function(cs) {
+                console_log('checksum: ' + cs);
+                if (cs != data_cs) {
+                    console_log('data_checksum:' + data_cs);
+                    popcorn.deleteFile(bookmarks_path, function() {
+                        console_log('file deleted: ' + bookmarks_path);
+                    }, function(e) {
+                        console_log('delete error: ' + bookmarks_path + ': ' + e);
+                    });
+
+                    popcorn.deleteFile(bookmarks_cs_path, function() {
+                        console_log('file deleted: ' + bookmarks_cs_path);
+                    }, function(e) {
+                        console_log('delete error: ' + bookmarks_cs_path + ': ' + e);
+                    });
+                }
+            });
+        }
+
+        popcorn_api.getBookmarks(function(bookmarks) {
+            if (bookmarks.length > 0) {
+                _verifyChecksum(bookmarks);
+            } else {
+                console_log('verifyBookmarksChecksum: bookmarks empty ');
+            }
+        }, function(e) {
+            console_log('verifyBookmarksChecksum error: ' + e);
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function downloadBookmark(bookmark) {
+        var url = popcorn_api.getResourceURL(bookmark.archive);
+        var dest_dir = popcorn.dirname(bookmark.archive);
+        var index = bookmark.local_path;
+
+        setFlash('Please wait while ' + bookmark.title + ' is being downloaded to your hard drive.');
+
+        popcorn.download(url, dest_dir, function(fpath) {
+            console_log('download successful: ' + fpath);
+            popcorn.extract(fpath, dest_dir, function(fpath) {
+                console_log('extract successful: ' + fpath);
+                popcorn.getFsUrl(index, function(url) {
+                    showBookmarks();
+                    setFlash(bookmark.title + ' was successfully downloaded to your hard drive.');
+                    console_log('index: ' + url);
+                });
+            }, function(e) {
+                onError(e);
+                console_log('extract failed: ' + fpath);
+            });
+        }, onError);
+    }
+
+    //-------------------------------------------------------------------------
+
+    function confirmBookmarkDownload(bookmark_id) {
+        getBookmarks(function(bookmarks) {
+            for (var i in bookmarks) {
+                var bookmark = bookmarks[i];
+                if (bookmark_id == bookmark.id) {
+                    if (bookmark.archive) {
+                        var msg = "Download " + bookmark.title + " to your hard drive?";
+                        if (confirm(msg)) {
+                            downloadBookmark(bookmark);
+                        }
+                    } else {
+                        setFlash(bookmark.title + ' is not yet available. Please try again in a while.');
+                    }
+                }
+            }
+        });
     }
 
     //-------------------------------------------------------------------------
 
     function showBookmarks() {
-        var app_url = host + '/bookmarks/get_all';
-        $.get(app_url, function(data) {
-                var bookmarksHtml = '';
-                $.each(data, function(key, val) {
-                    var bookmark = val.Bookmark;
-                    bookmarks.push(bookmark);
+        function _clear() {
+            $('#bookmarks').html('');
+        }
+        function _show(html) {
+            $('#bookmarks').append(html);
+        }
 
-                    //bookmarksHtml += "<div><a href='" + bookmark.url + "' target='_blank'>" + bookmark.title + "</a></div>";
-                    bookmarksHtml += "<div><a href='javascript:downloadBookmark(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+        getBookmarks(function(bookmarks) {
+            _clear();
+            $.each(bookmarks, function(key, val) {
+                var bookmark = val;
+                popcorn.getFsUrl(bookmark.local_path, function(url) {
+                    var bookmarksHtml = "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>";
+                    _show(bookmarksHtml);
+                }, function(e) {
+                    var bookmarksHtml = "<div><a href='javascript:confirmBookmarkDownload(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                    _show(bookmarksHtml);
                 });
-                $('#bookmarks').html(bookmarksHtml);
-        }, 'json');
+            });
+        });
     }
 
     //-------------------------------------------------------------------------
 
-    function addBookmark(title, url) {
-        var app_url = host + '/bookmarks/save';
-        var dataObj = {
-             Bookmark: {
-                 title: title,
-                 url: url
-             }
-        };
-        var payload = JSON.stringify(dataObj);
-
-        $.ajax({
-            type: 'POST',
-            contentType: 'application/json',
-            processData: false,
-            dataType: 'json',
-            timeout: 60000,
-            url: app_url,
-            data: payload
-        })
-        .success(function(data, textStatus, jqXHR) {
-                })
-        .error(function(jqXHR, textStatus, errorThrown) {
-                })
-        .complete(function(jqXHR, textStatus) {
-                window.close();
+    function initHandlers() {
+        $("#add-bookmark").click(function() {
+            chrome.tabs.getSelected(null, function(tab) {
+                popcorn_api.addBookmark(tab.title, tab.url, function() {
+                    if (! CONFIG.debug) {
+                        window.close();
+                    }
                 });
-
+            });
+        });
     }
 
+    //-------------------------------------------------------------------------
+
+    function initDisplay() {
+        var login_url = popcorn_api.getLoginURL();
+        console_log('login_url: ' + login_url);
+
+        $("#login").prop("href", login_url);
+        $("#login").hide();
+    }
+
+    //-------------------------------------------------------------------------
+
+    function doBackground() {
+        verifyBookmarksChecksum();
+    }
+
+    //-------------------------------------------------------------------------
+
+    function initialize(onend) {
+        function _onend() {
+            getActiveUser(function(user) {
+                console_log('initialize: user: ' + JSON.stringify(user));
+                if (user) {
+                    activeUser = user;
+                    onend();
+                } else {
+                    $("#login").show();
+                }
+            });
+        }
+
+        initDisplay();
+
+        if (CONFIG.clean_root) {
+            cleanRootFolder(_onend);
+        } else {
+            _onend();
+        }
+    }
+
+    //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
     $(document).ready(function() {
-        getActiveUser();
-        showBookmarks();
-
-        $("#add-bookmark").click(function() {
-            chrome.tabs.getSelected(null, function(tab) {
-                addBookmark(tab.title, tab.url);
-                });
+        popcorn_api.initialize({"host": CONFIG.host});
+        popcorn.initialize(function() {
+            initialize(function() {
+                initHandlers();
+                showBookmarks();
+                doBackground();
             });
-
-        /*
-        */
-        popcorn.test(function(msg) {
-            $("#flash").html($("#flash").html() + 'test: ' + msg + '<br>');
-        });
-        /*
-        */
-
-        popcorn.initialize(onerror);
-
+        }, onError);
     });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     </script>
 </head>
 
 <body>
-    <div id="action"><button id="add-bookmark">Add Bookmark</button></div>
+    <div id="action">
+        <button id="add-bookmark">Add Bookmark</button>
+        <a id="login" href="#" target="_blank">Log In</a>
+    </div>
     <hr>
     <div id="flash"></div>
     <div id="bookmarks"></div>
-    <div id="filelist"></div>
 </body>
 </html>
