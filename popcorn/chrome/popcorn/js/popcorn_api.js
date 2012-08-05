@@ -1,13 +1,13 @@
 (function(obj) {
 
     var _host = "";
+    var _access_token = null;
 
     var _resources = {
-        login          : '/users/login',
-        logout         : '/users/logout',
-        user           : '/users/getActiveUser',
-        bookmarks      : '/bookmarks/get_all',
-        add_bookmark   : '/bookmarks/save'
+        login          : '/api/login',
+        user           : '/api/get_user',
+        bookmarks      : '/api/get_bookmarks',
+        add_bookmark   : '/api/add_bookmark'
     }
 
     //--------------------------------------------------------------------------
@@ -21,22 +21,42 @@
 
     //--------------------------------------------------------------------------
 
-    function getResourceURL(resource) {
+    function setAccessToken(access_token) {
+        _access_token = access_token;
+    }
+
+    //--------------------------------------------------------------------------
+
+    function getResourceURL(resource, param) {
         var url = _host + resource;
+        if (param) {
+            url += '/' + param;
+        }
         return url;
     }
 
     //--------------------------------------------------------------------------
 
-    function getLoginURL() {
-        var url = _host + _resources.login;
-        return url;
+    function login(email, onend) {
+        var req_url = getResourceURL(_resources.login);
+
+        var dataObj = {
+            email: email
+        };
+        var payload = JSON.stringify(dataObj);
+
+        $.post(req_url, payload, function(data) {
+            onend(data);
+        }, 'json')
+        .error(function(jqXHR, textStatus, errorThrown) {
+            onend(null);
+        });
     }
 
     //--------------------------------------------------------------------------
 
     function getActiveUser(onend) {
-        var req_url = getResourceURL(_resources.user);
+        var req_url = getResourceURL(_resources.user, _access_token);
 
         $.get(req_url, function(data) {
             onend(data);
@@ -49,7 +69,7 @@
     //--------------------------------------------------------------------------
 
     function getBookmarks(onend) {
-        var req_url = getResourceURL(_resources.bookmarks);
+        var req_url = getResourceURL(_resources.bookmarks, _access_token);
 
         function parseData(data) {
             var bookmarks = new Array();
@@ -70,7 +90,7 @@
     //--------------------------------------------------------------------------
 
     function addBookmark(title, url, onend) {
-        var req_url = getResourceURL(_resources.add_bookmark);
+        var req_url = getResourceURL(_resources.add_bookmark, _access_token);
 
         var dataObj = {
              Bookmark: {
@@ -105,8 +125,9 @@
 
     obj.popcorn_api = {
         initialize     : initialize,
+        setAccessToken : setAccessToken,
         getResourceURL : getResourceURL,
-        getLoginURL    : getLoginURL,
+        login          : login,
         getActiveUser  : getActiveUser,
         getBookmarks   : getBookmarks,
         addBookmark    : addBookmark
