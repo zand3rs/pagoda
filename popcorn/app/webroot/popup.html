@@ -87,27 +87,29 @@
 
     //-------------------------------------------------------------------------
 
+    function setActiveUser(user, onend) {
+        var user_path = getStoragePath(POPCORN_PATH.user);
+        console_log('setActiveUser: user_path: ' + user_path);
+
+        var data = JSON.stringify(user);
+
+        console_log('setActiveUser: data: ' + data);
+        popcorn.saveAs(user_path, data, function(fpath) {
+            if (onend) onend();
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
     function getActiveUser(onend) {
         var user_path = getStoragePath(POPCORN_PATH.user);
         console_log('getActiveUser: user_path: ' + user_path);
-
-        function _getUser() {
-            popcorn_api.getActiveUser(function(user) {
-                if (user) {
-                    var data = JSON.stringify(user);
-
-                    console_log('popcorn_api.getActiveUser: data: ' + data);
-                    popcorn.saveAs(user_path, data);
-                }
-                onend(user);
-            });
-        }
 
         popcorn.readFileAsText(user_path, function(data) {
             var user = JSON.parse(data);
             onend(user);
         }, function() {
-            _getUser();
+            onend(null);
         });
     }
 
@@ -266,14 +268,46 @@
 
     //-------------------------------------------------------------------------
 
+    function addBookmark(title, url) {
+        if (!activeUser) {
+            return console_log("addBookmark: Login required!");
+        }
+
+        popcorn_api.addBookmark(title, url, function() {
+            if (! CONFIG.debug) {
+                window.close();
+            }
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    function doLogin(email, onend) {
+        popcorn_api.login(email, function(user) {
+            if (user) {
+                setActiveUser(user, function() {
+                    activeUser = user;
+                    popcorn_api.setAccessToken(activeUser.access_token);
+                    onend();
+                });
+            }
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
     function initHandlers() {
+        $("#login-submit").click(function() {
+            var email = $("#login-email").val();
+            doLogin(email, function() {
+                $("#login-box").hide();
+                showBookmarks();
+            });
+        });
+
         $("#add-bookmark").click(function() {
             chrome.tabs.getSelected(null, function(tab) {
-                popcorn_api.addBookmark(tab.title, tab.url, function() {
-                    if (! CONFIG.debug) {
-                        window.close();
-                    }
-                });
+                addBookmark(tab.title, tab.url);
             });
         });
     }
@@ -281,11 +315,7 @@
     //-------------------------------------------------------------------------
 
     function initDisplay() {
-        var login_url = popcorn_api.getLoginURL();
-        console_log('login_url: ' + login_url);
-
-        $("#login").prop("href", login_url);
-        $("#login").hide();
+        $("#login-box").hide();
     }
 
     //-------------------------------------------------------------------------
@@ -302,14 +332,16 @@
                 console_log('initialize: user: ' + JSON.stringify(user));
                 if (user) {
                     activeUser = user;
+                    popcorn_api.setAccessToken(activeUser.access_token);
                     onend();
                 } else {
-                    $("#login").show();
+                    $("#login-box").show();
                 }
             });
         }
 
         initDisplay();
+        initHandlers();
 
         if (CONFIG.clean_root) {
             cleanRootFolder(_onend);
@@ -325,7 +357,6 @@
         popcorn_api.initialize({"host": CONFIG.host});
         popcorn.initialize(function() {
             initialize(function() {
-                initHandlers();
                 showBookmarks();
                 doBackground();
             });
@@ -339,8 +370,11 @@
 
 <body>
     <div id="action">
+        <span id="login-box">
+            <input id="login-email" type="text" size="15" maxlength="100" placeholder="Email Address">
+            <button id="login-submit">Login</button>
+        </span>
         <button id="add-bookmark">Add Bookmark</button>
-        <a id="login" href="#" target="_blank">Log In</a>
     </div>
     <hr>
     <div id="flash"></div>
