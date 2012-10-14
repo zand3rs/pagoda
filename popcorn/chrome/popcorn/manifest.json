@@ -1,6 +1,6 @@
 {
   "name": "Popcorn",
-  "version": "1.0",
+  "version": "2.0",
   "description": "Popcorn bookmarks.",
   "browser_action": {
     "default_icon": "icon.png",
