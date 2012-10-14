@@ -8,7 +8,7 @@ if (!chrome.cookies) {
 var CONFIG = {
     host       : 'http://localhost/~zander/popcorn',
     clean_root : false,
-    debug      : true
+    debug      : false
 }
 
 var POPCORN_PATH = {
@@ -249,12 +249,21 @@ function showBookmarks() {
     function _clear() {
         $('#bookmarks').html('');
     }
-    function _show(html, id) {
+
+    function _show(bookmark, url) {
+        var html = "<div><a id='" + bookmark.id + "' href='" + url + "'>" + bookmark.title + "</a></div>";
+        var callback = function() {
+            if (url == '#') {
+                confirmBookmarkDownload(bookmark.id);
+            } else {
+                //chrome.tabs.create({"url": url});
+            }
+        }
+
         $('#bookmarks').append(html);
-        if (id) {
-            $('#bookmarks').find('#' + id).click(function() {
-                confirmBookmarkDownload(id);
-            });
+        $('#bookmarks').find('#' + bookmark.id).click(callback);
+        if (url != '#') {
+            $('#bookmarks').find('#' + bookmark.id).prop('target', '_blank');
         }
     }
 
@@ -263,12 +272,9 @@ function showBookmarks() {
         $.each(bookmarks, function(key, val) {
             var bookmark = val;
             popcorn.getFsUrl(bookmark.local_path, function(url) {
-                var bookmarksHtml = "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>";
-                _show(bookmarksHtml);
+                _show(bookmark, url);
             }, function(e) {
-                //var bookmarksHtml = "<div><a href='javascript:confirmBookmarkDownload(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                var bookmarksHtml = "<div><a id='" + bookmark.id + "' href='#'>" + bookmark.title + "</a></div>";
-                _show(bookmarksHtml, bookmark.id);
+                _show(bookmark, '#');
             });
         });
     });
@@ -310,12 +316,16 @@ function initHandlers() {
             addBookmark(tab.title, tab.url);
         });
     });
+
+    $("#login-link").click(function() {
+        chrome.tabs.create({"url": CONFIG.host + POPCORN_PATH.login});
+    });
 }
 
 //-------------------------------------------------------------------------
 
 function initDisplay() {
-    $("#login-link").prop("href", CONFIG.host + POPCORN_PATH.login).hide();
+    $("#login-link").hide();
 }
 
 //-------------------------------------------------------------------------
