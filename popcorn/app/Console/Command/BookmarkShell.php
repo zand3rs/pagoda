@@ -44,14 +44,18 @@ class BookmarkShell extends Shell {
         $match = preg_match_all('/href *= *[\'"](?!https?:\/\/)([^\'"]+\.[[:alnum:]]+)[^\'"]*["\']/', $response_body, $matches);
         if ($match) {
             foreach($matches[1] as $component) {
-                $download_component = preg_replace('/^\/\//', 'http://', $component);
-                $this->log('component: '.$download_component, 'console');
-                $component_url = (preg_match('/^https?:\/\//', $download_component)) ? $download_component : $base_url.$download_component;
-                $this->log('component_url: '.$component_url, 'console');
-                $component_uri = Web::download($component_url, $dest_dir);
-                $this->log('component_uri: '.$component_uri, 'console');
-                //-- replace remote paths...
-                $response_body = str_replace($component, $component_uri, $response_body);
+                try {
+                    $download_component = preg_replace('/^\/\//', 'http://', $component);
+                    $this->log('component: '.$download_component, 'console');
+                    $component_url = (preg_match('/^https?:\/\//', $download_component)) ? $download_component : $base_url.$download_component;
+                    $this->log('component_url: '.$component_url, 'console');
+                    $component_uri = Web::download($component_url, $dest_dir);
+                    $this->log('component_uri: '.$component_uri, 'console');
+                    //-- replace remote paths...
+                    $response_body = str_replace($component, $component_uri, $response_body);
+                } catch (Exception $e) {
+                    $this->log('Got exception: '.$e->getMessage(), 'console');
+                }
             }
         }
 
@@ -59,14 +63,18 @@ class BookmarkShell extends Shell {
         $match = preg_match_all('/src *= *[\'"]([^\'"]+\.[[:alnum:]]+)[^\'"]*["\']/', $response_body, $matches);
         if ($match) {
             foreach($matches[1] as $component) {
-                $download_component = preg_replace('/^\/\//', 'http://', $component);
-                $this->log('component: '.$download_component, 'console');
-                $component_url = (preg_match('/^https?:\/\//', $download_component)) ? $download_component : $base_url.$download_component;
-                $this->log('component_url: '.$component_url, 'console');
-                $component_uri = Web::download($component_url, $dest_dir);
-                $this->log('component_uri: '.$component_uri, 'console');
-                //-- replace remote paths...
-                $response_body = str_replace($component, $component_uri, $response_body);
+                try {
+                    $download_component = preg_replace('/^\/\//', 'http://', $component);
+                    $this->log('component: '.$download_component, 'console');
+                    $component_url = (preg_match('/^https?:\/\//', $download_component)) ? $download_component : $base_url.$download_component;
+                    $this->log('component_url: '.$component_url, 'console');
+                    $component_uri = Web::download($component_url, $dest_dir);
+                    $this->log('component_uri: '.$component_uri, 'console');
+                    //-- replace remote paths...
+                    $response_body = str_replace($component, $component_uri, $response_body);
+                } catch (Exception $e) {
+                    $this->log('Got exception: '.$e->getMessage(), 'console');
+                }
             }
         }
 

@@ -325,7 +325,8 @@ function initHandlers() {
 //-------------------------------------------------------------------------
 
 function initDisplay() {
-    $("#login-link").hide();
+    //$("#add-bookmark").addClass('hidden');
+    //$("#login-link").addClass('hidden');
 }
 
 //-------------------------------------------------------------------------
@@ -343,10 +344,10 @@ function initialize(onend) {
             if (user) {
                 activeUser = user;
                 popcorn_api.setAccessToken(activeUser.access_token);
+                $('#add-bookmark').removeClass('hidden');
                 onend();
             } else {
-                $("#add-bookmark").hide();
-                $("#login-link").show();
+                $('#login-link').removeClass('hidden');
             }
         });
     }

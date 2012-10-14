@@ -4,6 +4,10 @@ body {
     color: #444444;
 }
 
+.hidden {
+    display: none;
+}
+
 #action button {
 }
 

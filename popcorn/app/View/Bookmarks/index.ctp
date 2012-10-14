@@ -5,6 +5,7 @@
 			<th><?php echo $this->Paginator->sort('title');?></th>
 			<th><?php echo $this->Paginator->sort('url');?></th>
 			<th><?php echo $this->Paginator->sort('created');?></th>
+			<th class="actions"><?php echo __('Action');?></th>
 	</tr>
 	<?php foreach ($bookmarks as $bookmark): ?>
 	<tr>
@@ -19,6 +20,9 @@
         &nbsp;</td>
 		<td><?php echo h($bookmark['Bookmark']['url']); ?>&nbsp;</td>
 		<td><?php echo h($bookmark['Bookmark']['created']); ?>&nbsp;</td>
+		<td class="actions">
+			<?php echo $this->Form->postLink(__('Delete'), array('action' => 'delete', $bookmark['Bookmark']['id']), null, __('Are you sure you want to delete %s?', $bookmark['Bookmark']['title'])); ?>
+		</td>
 	</tr>
     <?php endforeach; ?>
 	</table>
