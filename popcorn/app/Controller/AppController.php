@@ -39,8 +39,11 @@ class AppController extends Controller {
     public function afterFilter() {
         if ($this->Auth->loggedIn()) {
             if (! $this->Cookie->read('user')) {
-                $this->Cookie->write('user.email', $this->Auth->user('email'), false);
-                $this->Cookie->write('user.access_token', $this->Auth->user('access_token'), false);
+                $user = array(
+                        'email' => $this->Auth->user('email'),
+                        'access_token' => $this->Auth->user('access_token')
+                        );
+                $this->Cookie->write('user', $user, false);
             }
         } else {
             $this->Cookie->destroy();

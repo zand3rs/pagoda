@@ -4,11 +4,12 @@
   "description": "Popcorn bookmarks.",
   "browser_action": {
     "default_icon": "icon.png",
-    "popup": "popup.html"
+    "default_popup": "popup.html"
   },
   "permissions": [
     "tabs",
     "http://localhost/",
     "unlimitedStorage"
-  ]
+  ],
+  "manifest_version": 2
 }
