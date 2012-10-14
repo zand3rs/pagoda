@@ -1,6 +1,10 @@
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 
+if (!chrome.cookies) {
+    chrome.cookies = chrome.experimental.cookies;
+}
+
 var CONFIG = {
     host       : 'http://localhost/~zander/popcorn',
     clean_root : false,
@@ -9,9 +13,14 @@ var CONFIG = {
 
 var POPCORN_PATH = {
     root          : '/popcorn',
+    login         : '/users/login',
     user          : '/user',
     bookmarks     : '/bookmarks',
     bookmarks_cs  : '/bookmarks_cs'
+}
+
+var COOKIES = {
+    user : 'popcorn[user]'
 }
 
 var activeUser = null;
@@ -92,14 +101,17 @@ function setActiveUser(user, onend) {
 //-------------------------------------------------------------------------
 
 function getActiveUser(onend) {
-    var user_path = getStoragePath(POPCORN_PATH.user);
-    console_log('getActiveUser: user_path: ' + user_path);
+    console_log('getActiveUser: user cookie: ' + COOKIES.user);
 
-    popcorn.readFileAsText(user_path, function(data) {
-        var user = JSON.parse(data);
-        onend(user);
-    }, function() {
-        onend(null);
+    chrome.cookies.get({url: CONFIG.host, name: COOKIES.user}, function(cookie) {
+        console_log(cookie);
+        if (cookie) {
+            var data = decodeURIComponent(cookie.value);
+            var user = JSON.parse(data);
+            onend(user);
+        } else {
+            onend(null);
+        }
     });
 }
 
@@ -237,8 +249,13 @@ function showBookmarks() {
     function _clear() {
         $('#bookmarks').html('');
     }
-    function _show(html) {
+    function _show(html, id) {
         $('#bookmarks').append(html);
+        if (id) {
+            $('#bookmarks').find('#' + id).click(function() {
+                confirmBookmarkDownload(id);
+            });
+        }
     }
 
     getBookmarks(function(bookmarks) {
@@ -249,8 +266,9 @@ function showBookmarks() {
                 var bookmarksHtml = "<div><a href='" + url + "' target='_blank'>" + bookmark.title + "</a></div>";
                 _show(bookmarksHtml);
             }, function(e) {
-                var bookmarksHtml = "<div><a href='javascript:confirmBookmarkDownload(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
-                _show(bookmarksHtml);
+                //var bookmarksHtml = "<div><a href='javascript:confirmBookmarkDownload(" + bookmark.id + ")'>" + bookmark.title + "</a></div>";
+                var bookmarksHtml = "<div><a id='" + bookmark.id + "' href='#'>" + bookmark.title + "</a></div>";
+                _show(bookmarksHtml, bookmark.id);
             });
         });
     });
@@ -287,14 +305,6 @@ function doLogin(email, onend) {
 //-------------------------------------------------------------------------
 
 function initHandlers() {
-    $("#login-submit").click(function() {
-        var email = $("#login-email").val();
-        doLogin(email, function() {
-            $("#login-box").hide();
-            showBookmarks();
-        });
-    });
-
     $("#add-bookmark").click(function() {
         chrome.tabs.getSelected(null, function(tab) {
             addBookmark(tab.title, tab.url);
@@ -305,7 +315,7 @@ function initHandlers() {
 //-------------------------------------------------------------------------
 
 function initDisplay() {
-    $("#login-box").hide();
+    $("#login-link").prop("href", CONFIG.host + POPCORN_PATH.login).hide();
 }
 
 //-------------------------------------------------------------------------
@@ -325,7 +335,8 @@ function initialize(onend) {
                 popcorn_api.setAccessToken(activeUser.access_token);
                 onend();
             } else {
-                $("#login-box").show();
+                $("#add-bookmark").hide();
+                $("#login-link").show();
             }
         });
     }

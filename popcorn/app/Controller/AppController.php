@@ -38,11 +38,15 @@ class AppController extends Controller {
 
     public function afterFilter() {
         if ($this->Auth->loggedIn()) {
-            if (! $this->Cookie->read('user')) {
-                $user = array(
-                        'email' => $this->Auth->user('email'),
-                        'access_token' => $this->Auth->user('access_token')
-                        );
+            $user = array(
+                    'id' => $this->Auth->user('id'),
+                    'email' => $this->Auth->user('email'),
+                    'access_token' => $this->Auth->user('access_token')
+                    );
+            $cookie_user = $this->Cookie->read('user');
+            if ($cookie_user != $user) {
+                $this->log('writing cookie...', 'app');
+                $this->log($user, 'app');
                 $this->Cookie->write('user', $user, false);
             }
         } else {

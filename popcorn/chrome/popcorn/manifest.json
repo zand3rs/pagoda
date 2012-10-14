@@ -8,7 +8,9 @@
   },
   "permissions": [
     "tabs",
-    "http://localhost/",
+    "cookies",
+    "http://*/*",
+    "https://*/*",
     "unlimitedStorage"
   ],
   "manifest_version": 2

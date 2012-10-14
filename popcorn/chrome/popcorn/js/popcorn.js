@@ -94,9 +94,15 @@
             };
 
             try {
-                var bb = new obj.BlobBuilder();
-                bb.append(data);
-                file_writer.write(bb.getBlob());
+                var blob = null;
+                if (Blob) {
+                    blob = new Blob([data]);
+                } else {
+                    var bb = new obj.BlobBuilder();
+                    bb.append(data);
+                    blob = bb.getBlob();
+                }
+                file_writer.write(blob);
             } catch (e) {
                 if (onerror) {
                     onerror('Write failed: ' + e.toString());
@@ -288,15 +294,29 @@
     //--------------------------------------------------------------------------
 
     function download(url, folder, onend, onerror) {
-        try {
+        function _sync() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, false); // Note: synchronous
             xhr.responseType = 'arraybuffer';
             xhr.send();
 
             var fpath = getFilePath(url, folder);
-
             saveAs(fpath, xhr.response, onend, onerror);
+        }
+
+        function _async() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = function() {
+                var fpath = getFilePath(url, folder);
+                saveAs(fpath, xhr.response, onend, onerror);
+            }
+            xhr.send();
+        }
+
+        try {
+            _async();
         } catch(e) {
             onerror('XHR Error: ' + e.toString());
         }
