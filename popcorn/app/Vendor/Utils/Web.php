@@ -58,6 +58,10 @@ class Web {
 
             $dest_file .= $extension;
         }
+        //-- clean dest_file
+        $dest_file = preg_replace('/\?.*$/', '', $dest_file);
+        $dest_file = preg_replace('/\.php.?$/', '.html', $dest_file);
+
         CakeLog::write('web', 'dest_file: '.$dest_file);
 
         $local_path = $upload_dir.(!empty($dest_dir) ? DS.$dest_dir : '').DS.$dest_file;
