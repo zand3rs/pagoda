@@ -7,7 +7,7 @@ if (!chrome.cookies) {
 
 var CONFIG = {
     host       : 'http://localhost/~zander/popcorn',
-    clean_root : true,
+    clean_root : false,
     debug      : true
 }
 
