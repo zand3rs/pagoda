@@ -44,6 +44,12 @@ class BookmarkShell extends Shell {
         $match = preg_match_all('/href *= *[\'"](?!https?:\/\/)([^\'"]+\.[[:alnum:]]+)[^\'"]*["\']/', $response_body, $matches);
         if ($match) {
             foreach($matches[1] as $component) {
+                //-- skip unsupported resources
+                if (preg_match('/mailto *:/', $component)) {
+                    $this->log('skipping component: '.$component, 'console');
+                    continue;
+                }
+
                 try {
                     $download_component = preg_replace('/^\/\//', 'http://', $component);
                     $this->log('component: '.$download_component, 'console');
