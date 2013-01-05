@@ -147,8 +147,9 @@
     function initialize(onend, onerror) {
         zip.workerScriptsPath = "js/zip/";
 
-        //obj.requestFileSystem(obj.PERSISTENT, 1024*1024*1024, function(filesystem) {
-        obj.requestFileSystem(obj.TEMPORARY, 4*1024*1024, function(filesystem) {
+        //obj.requestFileSystem(obj.TEMPORARY, 5*1024*1024, function(filesystem)
+        obj.requestFileSystem(obj.PERSISTENT, 5*1024*1024*1024, function(filesystem)
+		{
             fs = filesystem;
             onend();
         }, function(e) {
@@ -225,18 +226,44 @@
 
     //--------------------------------------------------------------------------
 
-    function createFile(fpath, onend, onerror) {
+    function createFile(fpath, onend, onerror, truncate) {
         var folders = fpath.split('/');
         var file = folders.pop();
 
+        function _createFile(dir_entry, file, onend, onerror) {
+            dir_entry.getFile(file, {create: true, exclusive: true}, onend, onerror);
+        }
+        
+        function _deleteFile(dir_entry, file, onend, onerror) {
+            dir_entry.getFile(file, {create: false}, function(file_entry) {
+                file_entry.remove(onend, onerror);
+            }, onerror);
+        }
+        
         createFolder(folders, function(dir_entry) {
-            dir_entry.getFile(file, {create: true}, function(file_entry) {
-                fsTruncate(file_entry, function(msg) {
-                    onend(file_entry);
-                }, onerror);
-            }, function(e) {
-                fsErrorHandler(e, onerror);
-            });
+            if (truncate) {
+                dir_entry.getFile(file, {create: true}, function(file_entry) {
+                    fsTruncate(file_entry, function(msg) {
+                        onend(file_entry);
+                    }, onerror);
+                }, function(e) {
+                    fsErrorHandler(e, onerror);
+                });
+            } else {
+                _deleteFile(dir_entry, file, function() {
+                    _createFile(dir_entry, file, function(file_entry) {
+                        onend(file_entry);
+                    }, function(e) {
+                        fsErrorHandler(e, onerror);
+                    });
+                }, function(e) {
+                    _createFile(dir_entry, file, function(file_entry) {
+                        onend(file_entry);
+                    }, function(e) {
+                        fsErrorHandler(e, onerror);
+                    });
+                });
+            }
         }, onerror);
     }
 
@@ -344,28 +371,43 @@
                     zip_reader.getEntries(function(entries) {
                         var total_files = entries.length;
                         var file_count = 0;
-                        function _onprogress(file_entry) {
-                            fsResolveUrls(file_entry);
+                        
+                        function _getNextEntry() {
+                            var idx = file_count++;
+                            var retval = false;
 
-                            file_count++;
-                            if (onprogress) {
-                                onprogress(file_count, total_files);
+                            if (file_count <= total_files) {
+                                retval = entries[idx];
+                                if (onprogress) {
+                                    onprogress(file_count, total_files);
+                                }
                             }
-                            if (file_count >= total_files) {
+                            return retval;
+                        }
+                        
+                        function _extractFiles() {
+                            var entry = _getNextEntry();
+                            if (entry) {
+                                var entry_path = (folder || '.') + '/' + entry.filename;
+                                createFile(entry_path, function(file_entry) {
+                                    try {
+                                        var writer = new zip.FileWriter(file_entry);
+                                        entry.getData(writer, function(blob) {
+                                            //fsResolveUrls(file_entry);
+                                            _extractFiles();
+                                        });
+                                    } catch (e) {
+                                        _extractFiles();
+                                    }
+                                }, function(e) {
+                                    _extractFiles();
+                                });
+                            } else {
                                 onend(fpath);
                             }
                         }
-                        entries.forEach(function(entry) {
-                            var entry_path = (folder || '.') + '/' + entry.filename;
-                            createFile(entry_path, function(file_entry) {
-                                var writer = new zip.FileWriter(file_entry);
-                                entry.getData(writer, function(blob) {
-                                    //var blobURL = file_entry.toURL();
-                                    //onend(blobURL);
-                                    _onprogress(file_entry);
-                                });
-                            });
-                        });
+                        
+                        _extractFiles();
                     });
                 }, onerror);
             }, function(e) {

@@ -7,8 +7,8 @@ if (!chrome.cookies) {
 
 var CONFIG = {
     host       : 'http://localhost/~zander/popcorn',
-    clean_root : false,
-    debug      : false
+    clean_root : true,
+    debug      : true
 }
 
 var POPCORN_PATH = {
@@ -215,6 +215,8 @@ function downloadBookmark(bookmark) {
                 showBookmarks();
                 setFlash(bookmark.title + ' was successfully downloaded to your hard drive.');
                 console_log('index: ' + url);
+            }, function(e) {
+                console_log('index error: ' + index + ': ' + e.toString());
             });
         }, function(e) {
             onError(e);
