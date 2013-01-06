@@ -151,9 +151,9 @@
         obj.requestFileSystem(obj.PERSISTENT, 5*1024*1024*1024, function(filesystem)
 		{
             fs = filesystem;
-            onend();
+            if (onend) onend();
         }, function(e) {
-            fsErrorHandler(e, onerror);
+            if (onerror) fsErrorHandler(e, onerror);
         });
     }
 
@@ -352,19 +352,64 @@
     //--------------------------------------------------------------------------
 
     function cached_download(url, folder, onend, onerror) {
+        var download_key = $.md5(url + '-' + folder);
+        var download_data = JSON.stringify({url: url, folder: folder, status: 'ongoing'});
+        localStorage.setItem(download_key, download_data);
+        
+        function _onend(fpath) {
+            download_data = JSON.stringify({url: url, folder: folder, status: 'success'});
+            localStorage.setItem(download_key, download_data);
+            onend(fpath);
+        }
+        function _onerror(e) {
+            download_data = JSON.stringify({url: url, folder: folder, status: 'error'});
+            localStorage.setItem(download_key, download_data);
+            onerror(e);
+        }
+        
         var fpath = getFilePath(url, folder);
         fileExists(fpath, function(exists) {
             if (exists) {
-                onend(fpath);
+                _onend(fpath);
             } else {
-                download(url, folder, onend, onerror);
+                download(url, folder, _onend, _onerror);
             }
         });
     }
 
     //--------------------------------------------------------------------------
 
+    function download_status(url, folder) {
+        var download_key = $.md5(url + '-' + folder);
+        var download_data = localStorage.getItem(download_key);
+        var retval = 'not_found';
+        
+        if (download_data) {
+            item = JSON.parse(download_data);
+            retval = item.status;
+        }
+
+        return retval;
+    }
+    
+    //--------------------------------------------------------------------------
+
     function extract(fpath, folder, onend, onerror, onprogress) {
+        var extract_key = $.md5(fpath + '-' + folder);
+        var extract_data = JSON.stringify({fpath: fpath, folder: folder, status: 'ongoing'});
+        localStorage.setItem(extract_key, extract_data);
+        
+        function _onend(fpath) {
+            extract_data = JSON.stringify({fpath: fpath, folder: folder, status: 'success'});
+            localStorage.setItem(extract_key, extract_data);
+            onend(fpath);
+        }
+        function _onerror(e) {
+            extract_data = JSON.stringify({fpath: fpath, folder: folder, status: 'error'});
+            localStorage.setItem(extract_key, extract_data);
+            onerror(e);
+        }
+
         getFile(fpath, function(file_entry) {
             file_entry.file(function(file) {
                 zip.createReader(new zip.BlobReader(file), function(zip_reader) {
@@ -378,9 +423,7 @@
 
                             if (file_count <= total_files) {
                                 retval = entries[idx];
-                                if (onprogress) {
-                                    onprogress(file_count, total_files);
-                                }
+                                if (onprogress) onprogress(file_count, total_files);
                             }
                             return retval;
                         }
@@ -403,19 +446,34 @@
                                     _extractFiles();
                                 });
                             } else {
-                                onend(fpath);
+                                _onend(fpath);
                             }
                         }
                         
                         _extractFiles();
                     });
-                }, onerror);
+                }, _onerror);
             }, function(e) {
-                fsErrorHandler(e, onerror);
+                fsErrorHandler(e, _onerror);
             });
-        }, onerror);
+        }, _onerror);
     }
 
+    //--------------------------------------------------------------------------
+
+    function extract_status(fpath, folder) {
+        var extract_key = $.md5(fpath + '-' + folder);
+        var extract_data = localStorage.getItem(extract_key);
+        var retval = 'not_found';
+        
+        if (extract_data) {
+            item = JSON.parse(extract_data);
+            retval = item.status;
+        }
+
+        return retval;
+    }
+    
     //--------------------------------------------------------------------------
 
     function getFsUrl(fpath, onend, onerror) {
@@ -455,17 +513,20 @@
         test : function(onend) {
             onend('Hello World!');
         },
-        initialize     : initialize,
-        download       : cached_download,
-        extract        : extract,
-        basename       : basename,
-        dirname        : dirname,
-        getFsUrl       : getFsUrl,
-        deleteFolder   : deleteFolder,
-        deleteFile     : deleteFile,
-        readFileAsText : readFileAsText,
-        saveAs         : saveAs,
-        strPad         : strPad
+        initialize      : initialize,
+        download        : cached_download,
+        download_status : download_status,
+        extract         : extract,
+        extract_status  : extract_status,
+        basename        : basename,
+        dirname         : dirname,
+        getFsUrl        : getFsUrl,
+        getFilePath     : getFilePath,
+        deleteFolder    : deleteFolder,
+        deleteFile      : deleteFile,
+        readFileAsText  : readFileAsText,
+        saveAs          : saveAs,
+        strPad          : strPad
     };
 
 })(this);

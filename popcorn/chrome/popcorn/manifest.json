@@ -6,6 +6,15 @@
     "default_icon": "img/icon.png",
     "default_popup": "popup.html"
   },
+  "background": {
+    "scripts": [
+      "js/jquery.min.js",
+      "js/jquery.md5.js",
+      "js/zip/zip.js",
+      "js/popcorn.js",
+      "js/background.js"
+    ]
+  },
   "permissions": [
     "tabs",
     "cookies",

@@ -6,9 +6,10 @@ if (!chrome.cookies) {
 }
 
 var CONFIG = {
-    host       : 'http://localhost/~zander/popcorn',
-    clean_root : false,
-    debug      : true
+    host        : 'http://localhost/~zander/popcorn',
+    clear_cache : false,
+    clean_root  : false,
+    debug       : false
 }
 
 var POPCORN_PATH = {
@@ -160,7 +161,7 @@ function getBookmarks(onend) {
 
 //-------------------------------------------------------------------------
 
-function verifyBookmarksChecksum() {
+function verifyBookmarksChecksum(onend) {
     var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
     var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
 
@@ -184,6 +185,8 @@ function verifyBookmarksChecksum() {
                     console_log('delete error: ' + bookmarks_cs_path + ': ' + e);
                 });
             }
+
+            if (onend) onend();
         });
     }
 
@@ -192,15 +195,17 @@ function verifyBookmarksChecksum() {
             _verifyChecksum(bookmarks);
         } else {
             console_log('verifyBookmarksChecksum: bookmarks empty ');
+            if (onend) onend();
         }
     }, function(e) {
         console_log('verifyBookmarksChecksum error: ' + e);
+        if (onend) onend();
     });
 }
 
 //-------------------------------------------------------------------------
 
-function downloadBookmark(bookmark) {
+function downloadBookmark_v1(bookmark) {
     var url = popcorn_api.getResourceURL(bookmark.archive);
     var dest_dir = popcorn.dirname(bookmark.archive);
     var index = bookmark.local_path;
@@ -223,6 +228,36 @@ function downloadBookmark(bookmark) {
             console_log('extract failed: ' + fpath);
         });
     }, onError);
+}
+
+//-------------------------------------------------------------------------
+
+function downloadBookmark(bookmark) {
+    setFlash('Please wait while ' + bookmark.title + ' is being downloaded to your hard drive.');
+
+    var request = {
+        cmd: 'download',
+        data: {
+            url: popcorn_api.getResourceURL(bookmark.archive),
+            dest_dir: popcorn.dirname(bookmark.archive),
+            index: bookmark.local_path
+        }
+    };
+    
+    chrome.extension.sendMessage(request, function(response) {
+        var cmd = response.cmd;
+        var status = response.status;
+        var data = response.data;
+        
+        if (status == 'success') {
+            showBookmarks();
+            setFlash(bookmark.title + ' was successfully downloaded to your hard drive.');
+            console_log('download successful: ' + data.toString());
+        } else {
+            onError(data);
+            console_log('download failed: ' + data.toString());
+        }
+    });
 }
 
 //-------------------------------------------------------------------------
@@ -252,31 +287,45 @@ function showBookmarks() {
         $('#bookmarks').html('');
     }
 
-    function _show(bookmark, url) {
-        var html = "<div><a id='" + bookmark.id + "' href='" + url + "'>" + bookmark.title + "</a></div>";
+    function _show(bookmark, url, status) {
+        var target = (url != '#') ? 'target=_blank' : '';
+        var html = "<div><a id='" + bookmark.id + "' href='" + url + "' " + target + ">" + bookmark.title + "</a></div>";
         var callback = function() {
-            if (url == '#') {
-                confirmBookmarkDownload(bookmark.id);
-            } else {
-                //chrome.tabs.create({"url": url});
+            switch (status) {
+                case 'success':
+                    //chrome.tabs.create({"url": url});
+                    if (url == '#') {
+                        confirmBookmarkDownload(bookmark.id);
+                    }
+                    break;
+                case 'ongoing':
+                    setFlash('Please wait while' + bookmark.title + ' is being downloaded to your hard drive.');
+                    break;
+                case 'error':
+                case 'not_found':
+                default:
+                    confirmBookmarkDownload(bookmark.id);
             }
         }
 
         $('#bookmarks').append(html);
         $('#bookmarks').find('#' + bookmark.id).click(callback);
-        if (url != '#') {
-            $('#bookmarks').find('#' + bookmark.id).prop('target', '_blank');
-        }
     }
 
     getBookmarks(function(bookmarks) {
         _clear();
         $.each(bookmarks, function(key, val) {
             var bookmark = val;
+            var url = popcorn_api.getResourceURL(bookmark.archive);
+            var folder = popcorn.dirname(bookmark.archive);
+            var fpath = popcorn.getFilePath(url, folder);
+            var download_status = popcorn.download_status(url, folder);
+            var extract_status = popcorn.extract_status(fpath, folder);
+
             popcorn.getFsUrl(bookmark.local_path, function(url) {
-                _show(bookmark, url);
+                _show(bookmark, url, extract_status);
             }, function(e) {
-                _show(bookmark, '#');
+                _show(bookmark, '#', extract_status);
             });
         });
     });
@@ -322,6 +371,18 @@ function initHandlers() {
     $("#login-link").click(function() {
         chrome.tabs.create({"url": CONFIG.host + POPCORN_PATH.login});
     });
+
+    $("#logout-link").click(function() {
+        $.get("https://mail.google.com/mail/?logout", function(data) {
+            console.log("google logout: ", data);
+        });
+    });
+
+    $("#test").click(function() {
+        chrome.extension.sendMessage({cmd: 'test'}, function(response) {
+            console.log("response: ", response);
+        });
+    });
 }
 
 //-------------------------------------------------------------------------
@@ -329,12 +390,6 @@ function initHandlers() {
 function initDisplay() {
     //$("#add-bookmark").addClass('hidden');
     //$("#login-link").addClass('hidden');
-}
-
-//-------------------------------------------------------------------------
-
-function doBackground() {
-    verifyBookmarksChecksum();
 }
 
 //-------------------------------------------------------------------------
@@ -362,6 +417,10 @@ function initialize(onend) {
     } else {
         _onend();
     }
+
+    if (CONFIG.clear_cache) {
+        localStorage.clear();
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -371,8 +430,7 @@ $(document).ready(function() {
     popcorn_api.initialize({"host": CONFIG.host});
     popcorn.initialize(function() {
         initialize(function() {
-            showBookmarks();
-            doBackground();
+            verifyBookmarksChecksum(showBookmarks);
         });
     }, onError);
 });
