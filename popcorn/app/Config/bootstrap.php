@@ -1,4 +1,6 @@
 <?php
+App::uses('File', 'Utility');
+
 /**
  * This file is loaded automatically by the app/webroot/index.php file after core.php
  *
@@ -69,6 +71,16 @@ CakePlugin::loadAll(array(
             ));
 
 
+/**
+ * Global functions...
+ */
+function load_private_key() {
+    $f = new File(APP.'Config'.DS.'popcorn_rsa');
+    $data = $f->read();
+    $f->close();
+    return $data;
+}
+
  /*
   * Popcorn config
   *
@@ -77,4 +89,12 @@ Configure::write('OAuth2.clientId', '1063125973669.apps.googleusercontent.com');
 Configure::write('OAuth2.clientSecret', 'QXzI7I-zCNO7R9WACN7Z5QKr');
 
 Configure::write('UPLOAD_ROOT', '/popcorn');
+
+//-- Chikka Sms Gateway
+Configure::write('CSG.enabled', false);
+Configure::write('CSG.host', 'http://115.85.24.13:7783');
+Configure::write('CSG.uri', '/');
+Configure::write('CSG.username', 'POPCORN_316');
+Configure::write('CSG.password', 'POPCORN_316');
+Configure::write('CSG.private_key', load_private_key());
 

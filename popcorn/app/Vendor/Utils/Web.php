@@ -19,9 +19,9 @@ class Web {
 
     //--------------------------------------------------------------------------
 
-    static public function post($url, $data) {
+    static public function post($url, $data, $options = null) {
         $socket = new HttpSocket();
-        $result = $socket->post($url, $data);
+        $result = $socket->post($url, $data, $options);
         //$response = $socket->response;
 
         return $result;
