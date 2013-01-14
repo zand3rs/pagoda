@@ -27,6 +27,7 @@ class Sms {
         $user = Configure::read('CSG.username');
         $pass = Configure::read('CSG.password');
         $private_key = Configure::read('CSG.private_key');
+        $transid = self::randomString(36, $msisdn);
 
         $url = $host.$uri;
         $fields = array(
@@ -37,12 +38,17 @@ class Sms {
                 'SUB_TYPE' => 'FREE',
                 'SERVICE' => 'POPCORN-PUSH',
                 'ENCODING' => 'SMS',
+                'TRANSID' => $transid,
                 'MSISDN' => $msisdn,
                 'BODY' => $message
                 );
         $data = http_build_query(array_merge($fields, $extras));
         $signature = self::generateSignature($data, $private_key);
         $options = array('header' => array('SIG' => $signature));
+
+        CakeLog::write('sms', 'url: '.$url);
+        CakeLog::write('sms', 'sig: '.$signature);
+        CakeLog::write('sms', 'data: '.$data);
 
         return Web::post($url, $data, $options);
     }
@@ -90,4 +96,23 @@ class Sms {
 
         return $status;
     }
+
+    //--------------------------------------------------------------------------
+
+    private function randomString($length = 8, $prefix = '') {
+        $possible = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $possible_max = strlen($possible) - 1;
+
+        $str = $prefix;
+        $len = strlen($str);
+
+        for ($i=$len; $i<$length; $i++) {
+            $idx = mt_rand(0, $possible_max);
+            $char = $possible[$idx];
+            $str .= $char;
+        }
+
+        return $str;
+    }
+
 }

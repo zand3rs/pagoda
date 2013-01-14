@@ -23,6 +23,10 @@ class Web {
         $socket = new HttpSocket();
         $result = $socket->post($url, $data, $options);
         //$response = $socket->response;
+        CakeLog::write('web', 'url: '.$url);
+        CakeLog::write('web', 'data: '.$data);
+        CakeLog::write('web', 'options: '.print_r($options, true));
+        CakeLog::write('web', 'request'.print_r($socket->request, true));
 
         return $result;
     }

@@ -78,7 +78,7 @@ function load_private_key() {
     $f = new File(APP.'Config'.DS.'popcorn_rsa');
     $data = $f->read();
     $f->close();
-    return $data;
+    return trim($data);
 }
 
  /*
