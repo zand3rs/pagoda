@@ -47,7 +47,7 @@ class User extends AppModel {
     public function afterSave($created) {
         if ($this->data[$this->alias]['pin_code']) {
             $this->log('afterSave: inserting to sms push queue...', 'user');
-            Resque::enqueue('default', 'SmsShell', array('mobile_verification', $this->data[$this->alias]['id']));
+            Resque::enqueue('default', 'SmsShell', array('mobile_verification', $this->id));
         }
         return true;
     }

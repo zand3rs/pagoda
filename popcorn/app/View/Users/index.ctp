@@ -60,8 +60,15 @@
 		<li><?php echo $this->Html->link(__('Logout'), array('action' => 'logout')); ?> </li>
 		<li><?php echo $this->Html->link(__('Change Mobile'), array('action' => 'change_mobile')); ?> </li>
         <?php if ($user['User']['mobile_status'] !== 'VERIFIED'): ?>
-		<li><?php echo $this->Html->link(__('Resend Mobile Pin'), array('action' => 'generate_pin')); ?> </li>
-		<li><?php echo $this->Html->link(__('Verify Mobile'), array('action' => 'verify')); ?> </li>
+            <?php
+            $expiry_date = strtotime($user['User']['mobile_verification_expiry']);
+            $current_date = strtotime(date('Y-m-d H:i:s'));
+            if ($current_date > $expiry_date):
+            ?>
+            <li><?php echo $this->Html->link(__('Resend Mobile Pin'), array('action' => 'generate_pin')); ?> </li>
+            <?php else: ?>
+            <li><?php echo $this->Html->link(__('Verify Mobile'), array('action' => 'verify')); ?> </li>
+            <?php endif; ?>
         <?php endif; ?>
 		<li><?php echo $this->Html->link(__('Bookmarks'), array('controller' => 'bookmarks')); ?> </li>
 	</ul>

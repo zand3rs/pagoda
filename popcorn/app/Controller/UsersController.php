@@ -39,8 +39,12 @@ class UsersController extends AppController {
         
         if ($this->request->is('post') || $this->request->is('put')) {
             $data = $this->User->read();
+            $expiry_date = strtotime($data['User']['mobile_verification_expiry']);
+            $current_date = strtotime(date('Y-m-d H:i:s'));
+
             if ($data['User']['pin_code'] === $this->request->data['User']['pin_code']) {
-                if ($this->User->updateAll(array(
+                if ($expiry_date > $current_date && 
+                        $this->User->updateAll(array(
                                 'mobile_status' => "'VERIFIED'"
                                 ))) {
                     $this->Session->setFlash(__('Mobile verification successful.'));
