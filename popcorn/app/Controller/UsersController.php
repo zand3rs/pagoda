@@ -1,6 +1,7 @@
 <?php
 App::uses('AppController', 'Controller');
 App::import('Vendor', 'Utils/Web');
+App::import('Vendor', 'Utils/Secure');
 
 /**
  * Users Controller
@@ -93,6 +94,11 @@ class UsersController extends AppController {
 
         if ($this->request->is('post')) {
             $this->User->create();
+            $this->request->data['User']['pin_code'] = Secure::randomString();
+            $this->request->data['User']['mobile_verification_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
+            $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
+            $this->request->data['User']['date_registered'] = date('Y-m-d H:i:s');
+
             if (! $this->User->save($this->request->data)) {
                 $this->Session->setFlash(__('Unable to register. Please try again.'));
             }
@@ -106,7 +112,6 @@ class UsersController extends AppController {
             }
 
             $this->request->data['User']['email'] = $response_body['email'];
-            $this->request->data['User']['pin_code'] = $this->Password->generate();
             $this->request->data['User']['auth_code'] = $this->Session->read('OAuth2.code');
             $this->request->data['User']['access_token'] = $this->Session->read('OAuth2.access_token');
             $this->request->data['User']['token_type'] = $this->Session->read('OAuth2.token_type');
@@ -119,6 +124,69 @@ class UsersController extends AppController {
         }
 
         $this->render('signup');
+    }
+
+    //--------------------------------------------------------------------------
+
+    public function change_mobile() {
+        $this->User->id = $this->Auth->user('id');
+
+        if (!$this->User->exists()) {
+            $this->Session->setFlash(__('User not found.'));
+            $this->redirect($this->Auth->logout());
+        }
+
+        $data = $this->User->read();
+
+        if ($this->request->is('post') || $this->request->is('put')) {
+            $old_mobile = $data['User']['mobile'];
+            $new_mobile = $this->request->data['User']['mobile'];
+
+            $status = true;
+            if ($old_mobile != $new_mobile) {
+                $this->request->data['User']['pin_code'] = Secure::randomString();
+                $this->request->data['User']['mobile_verification_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
+                $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
+                $status = $this->User->save($this->request->data);
+            }
+            if ($status) {
+                $this->Session->setFlash(__('The mobile number has been saved.'));
+                $this->redirect(array('action' => 'index'));
+            } else {
+                $this->Session->setFlash(__('The mobile number could not be saved. Please, try again.'));
+            }
+        } else {
+            $this->request->data = $data;
+        }
+
+        $this->render('change_mobile');
+    }
+
+    //--------------------------------------------------------------------------
+
+    public function generate_pin() {
+        $this->User->id = $this->Auth->user('id');
+
+        if (!$this->User->exists()) {
+            $this->Session->setFlash(__('User not found.'));
+            $this->redirect($this->Auth->logout());
+        }
+        
+        $pin_code = Secure::randomString();
+        $pin_expiry = date('Y-m-d H:i:s', strtotime('+1 day'));
+        $mobile_status = 'UNVERIFIED';
+
+        $this->User->set('pin_code', $pin_code);
+        $this->User->set('mobile_verification_expiry', $pin_expiry);
+        $this->User->set('mobile_status', $mobile_status);
+
+        if ($this->User->save()) {
+            $this->Session->setFlash(__('Mobile pin code generated.'));
+        } else {
+            $this->Session->setFlash(__('Unable to generate mobile pin code.'));
+        }
+
+        $this->redirect(array('action' => 'index'));
     }
 
     //--------------------------------------------------------------------------
@@ -153,6 +221,7 @@ class UsersController extends AppController {
         }
     }
 
+    //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
     private function getOAuth2RequestUri() {

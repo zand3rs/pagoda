@@ -11,26 +11,31 @@
 			<?php echo h($user['User']['mobile']); ?>
 			&nbsp;
 		</dd>
+        <!--
 		<dt><?php echo __('Pin Code'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['pin_code']); ?>
 			&nbsp;
 		</dd>
+        //-->
 		<dt><?php echo __('Mobile Status'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['mobile_status']); ?>
 			&nbsp;
 		</dd>
+        <!--
 		<dt><?php echo __('Mobile Verification Expiry'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['mobile_verification_expiry']); ?>
 			&nbsp;
 		</dd>
+        //-->
 		<dt><?php echo __('Date Registered'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['date_registered']); ?>
 			&nbsp;
 		</dd>
+        <!--
 		<dt><?php echo __('Access Token'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['access_token']); ?>
@@ -46,13 +51,16 @@
 			<?php echo h($user['User']['token_expiry']); ?>
 			&nbsp;
 		</dd>
+        //-->
 	</dl>
 </div>
 <div class="actions">
 	<h3><?php echo __('Actions'); ?></h3>
 	<ul>
 		<li><?php echo $this->Html->link(__('Logout'), array('action' => 'logout')); ?> </li>
+		<li><?php echo $this->Html->link(__('Change Mobile'), array('action' => 'change_mobile')); ?> </li>
         <?php if ($user['User']['mobile_status'] !== 'VERIFIED'): ?>
+		<li><?php echo $this->Html->link(__('Resend Mobile Pin'), array('action' => 'generate_pin')); ?> </li>
 		<li><?php echo $this->Html->link(__('Verify Mobile'), array('action' => 'verify')); ?> </li>
         <?php endif; ?>
 		<li><?php echo $this->Html->link(__('Bookmarks'), array('controller' => 'bookmarks')); ?> </li>
