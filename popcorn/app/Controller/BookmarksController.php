@@ -8,6 +8,18 @@ App::uses('AppController', 'Controller');
 class BookmarksController extends AppController {
 
     public $autoRender = false;
+    public $uses = array('Bookmark', 'User');
+
+    //--------------------------------------------------------------------------
+
+    public function beforeFilter() {
+        parent::beforeFilter();
+
+        $user = $this->User->read(null, $this->Auth->user('id'));
+        if (!$user || $user['User']['mobile_status'] !== 'VERIFIED') {
+            $this->redirect(array('controller' => 'users', 'action' => 'index'));
+        }
+    }
 
     //--------------------------------------------------------------------------
 
