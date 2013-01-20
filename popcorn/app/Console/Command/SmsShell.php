@@ -25,7 +25,12 @@ class SmsShell extends Shell {
         $this->log("mobile: $mobile", 'sms');
         $this->log("message: $message", 'sms');
 
-        //$status = Sms::send($mobile, $message);
-        //$this->log('status: '.$status->code.': '.$status->body, 'sms');
+        $enabled = Configure::read('CSG.enabled');
+        if ($enabled) {
+            $status = Sms::send($mobile, $message);
+            $this->log('status: '.$status->code.': '.$status->body, 'sms');
+        } else {
+            $this->log('gateway is disabled...', 'sms');
+        }
     }
 }

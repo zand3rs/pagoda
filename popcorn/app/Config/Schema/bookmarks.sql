@@ -6,6 +6,8 @@ CREATE TABLE bookmarks (
   url VARCHAR(1024) NOT NULL,
   local_path VARCHAR(512),
   archive VARCHAR(512),
+  downloaded TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+  downloaded_at DATETIME,
   created DATETIME,
   modified DATETIME,
   PRIMARY KEY (id),

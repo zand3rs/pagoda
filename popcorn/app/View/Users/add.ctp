@@ -6,8 +6,8 @@
 		echo $this->Form->input('email');
 		echo $this->Form->input('mobile');
 		echo $this->Form->input('pin_code');
+		echo $this->Form->input('pin_expiry');
 		echo $this->Form->input('mobile_status');
-		echo $this->Form->input('mobile_verification_expiry');
 		echo $this->Form->input('date_registered');
 		echo $this->Form->input('auth_code');
 		echo $this->Form->input('access_token');

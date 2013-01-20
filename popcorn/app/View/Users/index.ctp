@@ -17,19 +17,17 @@
 			<?php echo h($user['User']['pin_code']); ?>
 			&nbsp;
 		</dd>
+		<dt><?php echo __('Pin Expiry'); ?></dt>
+		<dd>
+			<?php echo h($user['User']['pin_expiry']); ?>
+			&nbsp;
+		</dd>
         //-->
 		<dt><?php echo __('Mobile Status'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['mobile_status']); ?>
 			&nbsp;
 		</dd>
-        <!--
-		<dt><?php echo __('Mobile Verification Expiry'); ?></dt>
-		<dd>
-			<?php echo h($user['User']['mobile_verification_expiry']); ?>
-			&nbsp;
-		</dd>
-        //-->
 		<dt><?php echo __('Date Registered'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['date_registered']); ?>
@@ -61,7 +59,7 @@
 		<li><?php echo $this->Html->link(__('Change Mobile'), array('action' => 'change_mobile')); ?> </li>
         <?php if ($user['User']['mobile_status'] !== 'VERIFIED'): ?>
             <?php
-            $expiry_date = strtotime($user['User']['mobile_verification_expiry']);
+            $expiry_date = strtotime($user['User']['pin_expiry']);
             $current_date = strtotime(date('Y-m-d H:i:s'));
             if ($current_date > $expiry_date):
             ?>

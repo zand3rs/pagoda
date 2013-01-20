@@ -39,7 +39,7 @@ class UsersController extends AppController {
         
         if ($this->request->is('post') || $this->request->is('put')) {
             $data = $this->User->read();
-            $expiry_date = strtotime($data['User']['mobile_verification_expiry']);
+            $expiry_date = strtotime($data['User']['pin_expiry']);
             $current_date = strtotime(date('Y-m-d H:i:s'));
 
             if ($data['User']['pin_code'] === $this->request->data['User']['pin_code']) {
@@ -99,7 +99,7 @@ class UsersController extends AppController {
         if ($this->request->is('post')) {
             $this->User->create();
             $this->request->data['User']['pin_code'] = Secure::randomString();
-            $this->request->data['User']['mobile_verification_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
+            $this->request->data['User']['pin_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
             $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
             $this->request->data['User']['date_registered'] = date('Y-m-d H:i:s');
 
@@ -149,7 +149,7 @@ class UsersController extends AppController {
             $status = true;
             if ($old_mobile != $new_mobile) {
                 $this->request->data['User']['pin_code'] = Secure::randomString();
-                $this->request->data['User']['mobile_verification_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
+                $this->request->data['User']['pin_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
                 $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
                 $status = $this->User->save($this->request->data);
             }
@@ -181,7 +181,7 @@ class UsersController extends AppController {
         $mobile_status = 'UNVERIFIED';
 
         $this->User->set('pin_code', $pin_code);
-        $this->User->set('mobile_verification_expiry', $pin_expiry);
+        $this->User->set('pin_expiry', $pin_expiry);
         $this->User->set('mobile_status', $mobile_status);
 
         if ($this->User->save()) {

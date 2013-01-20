@@ -6,8 +6,8 @@
 			<th><?php echo $this->Paginator->sort('email');?></th>
 			<th><?php echo $this->Paginator->sort('mobile');?></th>
 			<th><?php echo $this->Paginator->sort('pin_code');?></th>
+			<th><?php echo $this->Paginator->sort('pin_expiry');?></th>
 			<th><?php echo $this->Paginator->sort('mobile_status');?></th>
-			<th><?php echo $this->Paginator->sort('mobile_verification_expiry');?></th>
 			<th><?php echo $this->Paginator->sort('date_registered');?></th>
 			<th><?php echo $this->Paginator->sort('auth_code');?></th>
 			<th><?php echo $this->Paginator->sort('access_token');?></th>
@@ -25,8 +25,8 @@
 		<td><?php echo h($user['User']['email']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['mobile']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['pin_code']); ?>&nbsp;</td>
+		<td><?php echo h($user['User']['pin_expiry']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['mobile_status']); ?>&nbsp;</td>
-		<td><?php echo h($user['User']['mobile_verification_expiry']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['date_registered']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['auth_code']); ?>&nbsp;</td>
 		<td><?php echo h($user['User']['access_token']); ?>&nbsp;</td>

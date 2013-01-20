@@ -16,14 +16,14 @@
 			<?php echo h($user['User']['pin_code']); ?>
 			&nbsp;
 		</dd>
+		<dt><?php echo __('Pin Expiry'); ?></dt>
+		<dd>
+			<?php echo h($user['User']['pin_expiry']); ?>
+			&nbsp;
+		</dd>
 		<dt><?php echo __('Mobile Status'); ?></dt>
 		<dd>
 			<?php echo h($user['User']['mobile_status']); ?>
-			&nbsp;
-		</dd>
-		<dt><?php echo __('Mobile Verification Expiry'); ?></dt>
-		<dd>
-			<?php echo h($user['User']['mobile_verification_expiry']); ?>
 			&nbsp;
 		</dd>
 		<dt><?php echo __('Date Registered'); ?></dt>
