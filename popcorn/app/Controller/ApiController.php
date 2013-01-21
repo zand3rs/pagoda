@@ -119,6 +119,35 @@ class ApiController extends AppController {
     }
 
     //--------------------------------------------------------------------------
+
+    public function download_bookmark($access_token = null, $bookmark_id) {
+        $user = $this->User->findByAccessToken($access_token);
+        if (!$user) {
+            return $this->response->statusCode(404);
+        }
+        $user_id = $user['User']['id'];
+
+        $bookmark = $this->Bookmark->find('first', array(
+                    'fields' => array(
+                        'Bookmark.id', 'Bookmark.title',
+                        'Bookmark.url', 'Bookmark.local_path', 'Bookmark.archive',
+                        'Bookmark.created', 'Bookmark.modified'
+                        ),
+                    'conditions' => array(
+                        'Bookmark.id' => $bookmark_id,
+                        'Bookmark.user_id' => $user_id
+                        ),
+                    'recursive' => -1,
+                    ));
+
+        if ($bookmark && $bookmark['Bookmark']['archive']) {
+            $this->redirect($bookmark['Bookmark']['archive']);
+        } else {
+            return $this->response->statusCode(404);
+        }
+    }
+
+    //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
 }
