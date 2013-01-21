@@ -63,6 +63,8 @@ class Bookmark extends AppModel {
     public function afterSave($created) {
         if ($created) {
             Resque::enqueue('default', 'BookmarkShell', array('download', $this->data[$this->alias]['id']));
+        } else if ($this->data[$this->alias]['downloaded']) {
+            Resque::enqueue('default', 'SmsShell', array('download_bookmark', $this->id));
         }
         return true;
     }

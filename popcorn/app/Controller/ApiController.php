@@ -128,11 +128,6 @@ class ApiController extends AppController {
         $user_id = $user['User']['id'];
 
         $bookmark = $this->Bookmark->find('first', array(
-                    'fields' => array(
-                        'Bookmark.id', 'Bookmark.title',
-                        'Bookmark.url', 'Bookmark.local_path', 'Bookmark.archive',
-                        'Bookmark.created', 'Bookmark.modified'
-                        ),
                     'conditions' => array(
                         'Bookmark.id' => $bookmark_id,
                         'Bookmark.user_id' => $user_id
@@ -141,6 +136,12 @@ class ApiController extends AppController {
                     ));
 
         if ($bookmark && $bookmark['Bookmark']['archive']) {
+            if (!$bookmark['Bookmark']['downloaded']) {
+                $this->Bookmark->id = $bookmark_id;
+                $this->Bookmark->set('downloaded', 1);
+                $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
+                $this->Bookmark->save();
+            }
             $this->redirect($bookmark['Bookmark']['archive']);
         } else {
             return $this->response->statusCode(404);
