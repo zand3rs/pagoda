@@ -28,7 +28,7 @@ class ApiController extends AppController {
         $data = $this->request->input('json_decode');
         $user = $this->User->findByEmail($data->email);
         if (!$user) {
-            return $this->response->statusCode(404);
+            return $this->response->statusCode(401);
         }
 
         $payload = array(
@@ -44,7 +44,7 @@ class ApiController extends AppController {
     public function get_user($access_token = null) {
         $user = $this->User->findByAccessToken($access_token);
         if (!$user) {
-            return $this->response->statusCode(404);
+            return $this->response->statusCode(401);
         }
 
         $payload = array(
@@ -61,7 +61,7 @@ class ApiController extends AppController {
     public function get_bookmarks($access_token = null) {
         $user = $this->User->findByAccessToken($access_token);
         if (!$user) {
-            return $this->response->statusCode(404);
+            return $this->response->statusCode(401);
         }
         $user_id = $user['User']['id'];
 
@@ -89,7 +89,7 @@ class ApiController extends AppController {
 
         $user = $this->User->findByAccessToken($access_token);
         if (!$user) {
-            return $this->response->statusCode(404);
+            return $this->response->statusCode(401);
         }
         $user_id = $user['User']['id'];
 
@@ -123,7 +123,7 @@ class ApiController extends AppController {
     public function download_bookmark($access_token = null, $bookmark_id) {
         $user = $this->User->findByAccessToken($access_token);
         if (!$user) {
-            return $this->response->statusCode(404);
+            return $this->response->statusCode(401);
         }
         $user_id = $user['User']['id'];
 
