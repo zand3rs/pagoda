@@ -1,6 +1,6 @@
 {
   "name": "Popcorn",
-  "version": "3.0",
+  "version": "4.0",
   "description": "Popcorn bookmarks.",
   "browser_action": {
     "default_icon": "img/icon.png",
@@ -11,6 +11,8 @@
       "js/jquery.min.js",
       "js/jquery.md5.js",
       "js/zip/zip.js",
+      "js/config.js",
+      "js/utils.js",
       "js/popcorn.js",
       "js/background.js"
     ]

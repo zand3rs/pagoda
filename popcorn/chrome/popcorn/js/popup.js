@@ -5,13 +5,6 @@ if (!chrome.cookies) {
     chrome.cookies = chrome.experimental.cookies;
 }
 
-var CONFIG = {
-    host        : 'http://localhost/~zander/popcorn',
-    clear_cache : false,
-    clean_root  : false,
-    debug       : false
-}
-
 var POPCORN_PATH = {
     root          : '/popcorn',
     login         : '/users/login',
@@ -45,14 +38,6 @@ function onError(msg) {
 }
 
 //-------------------------------------------------------------------------
-
-function console_log(msg) {
-    if (CONFIG.debug) {
-        console.log(msg);
-    }
-}
-
-//-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 
 function getStoragePath(fpath) {
@@ -67,6 +52,13 @@ function getStoragePath(fpath) {
     storage_path += fpath;
 
     return storage_path;
+}
+
+//-------------------------------------------------------------------------
+
+function getDownloadUrl(bookmark) {
+    var url = popcorn_api.getResourceURL(POPCORN_PATH.bookmarks, 'download', bookmark.id);
+    return url;
 }
 
 //-------------------------------------------------------------------------
@@ -238,7 +230,9 @@ function downloadBookmark(bookmark) {
     var request = {
         cmd: 'download',
         data: {
-            url: popcorn_api.getResourceURL(bookmark.archive),
+            id: bookmark.id,
+            url: getDownloadUrl(bookmark),
+            src_url: popcorn_api.getResourceURL(bookmark.archive),
             dest_dir: popcorn.dirname(bookmark.archive),
             index: bookmark.local_path
         }
@@ -288,6 +282,8 @@ function showBookmarks() {
     }
 
     function _show(bookmark, url, status) {
+        //-- url override
+        if (status != 'success') { url = '#'; }
         var target = (url != '#') ? 'target=_blank' : '';
         var html = "<div><a id='" + bookmark.id + "' href='" + url + "' " + target + ">" + bookmark.title + "</a></div>";
         var callback = function() {
@@ -317,9 +313,10 @@ function showBookmarks() {
         $.each(bookmarks, function(key, val) {
             var bookmark = val;
             var url = popcorn_api.getResourceURL(bookmark.archive);
+            var d_url = getDownloadUrl(bookmark);
             var folder = popcorn.dirname(bookmark.archive);
-            var fpath = popcorn.getFilePath(url, folder);
-            var download_status = popcorn.download_status(url, folder);
+            var fpath = popcorn.getFilePath(d_url, folder);
+            var download_status = popcorn.download_status(d_url, folder);
             var extract_status = popcorn.extract_status(fpath, folder);
 
             popcorn.getFsUrl(bookmark.local_path, function(url) {
@@ -361,6 +358,12 @@ function doLogin(email, onend) {
 
 //-------------------------------------------------------------------------
 
+function refreshBookmarks() {
+    verifyBookmarksChecksum(showBookmarks);
+}
+
+//-------------------------------------------------------------------------
+
 function initHandlers() {
     $("#add-bookmark").click(function() {
         chrome.tabs.getSelected(null, function(tab) {
@@ -368,6 +371,17 @@ function initHandlers() {
         });
     });
 
+    $("#refresh").click(function() {
+        showBookmarks();
+    });
+    
+    $("#clear-cache").click(function() {
+        if (confirm("Clear your cache?")) {
+            localStorage.clear();
+            cleanRootFolder(refreshBookmarks);
+        }
+    });
+    
     $("#login-link").click(function() {
         chrome.tabs.create({"url": CONFIG.host + POPCORN_PATH.login});
     });
@@ -388,8 +402,10 @@ function initHandlers() {
 //-------------------------------------------------------------------------
 
 function initDisplay() {
-    //$("#add-bookmark").addClass('hidden');
-    //$("#login-link").addClass('hidden');
+    if (CONFIG.debug) {
+        $('#clear-cache').removeClass('hidden');
+        $('#refresh').removeClass('hidden');
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -411,16 +427,7 @@ function initialize(onend) {
 
     initDisplay();
     initHandlers();
-
-    if (CONFIG.clean_root) {
-        cleanRootFolder(_onend);
-    } else {
-        _onend();
-    }
-
-    if (CONFIG.clear_cache) {
-        localStorage.clear();
-    }
+    _onend();
 }
 
 //-------------------------------------------------------------------------
@@ -430,7 +437,7 @@ $(document).ready(function() {
     popcorn_api.initialize({"host": CONFIG.host});
     popcorn.initialize(function() {
         initialize(function() {
-            verifyBookmarksChecksum(showBookmarks);
+            refreshBookmarks();
         });
     }, onError);
 });

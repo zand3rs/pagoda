@@ -4,10 +4,11 @@
     var _access_token = null;
 
     var _resources = {
-        login          : '/api/login',
-        user           : '/api/get_user',
-        bookmarks      : '/api/get_bookmarks',
-        add_bookmark   : '/api/add_bookmark'
+        login             : '/api/login',
+        user              : '/api/get_user',
+        bookmarks         : '/api/get_bookmarks',
+        add_bookmark      : '/api/add_bookmark',
+        download_bookmark : '/api/download_bookmark'
     }
 
     //--------------------------------------------------------------------------
@@ -27,10 +28,26 @@
 
     //--------------------------------------------------------------------------
 
-    function getResourceURL(resource, param) {
+    function getResourceURL_v1(resource, param) {
         var url = _host + resource;
         if (param) {
             url += '/' + param;
+        }
+        return url;
+    }
+
+    //--------------------------------------------------------------------------
+
+    function getResourceURL() {
+        var url = _host;
+        for (var i=0; i<arguments.length; ++i) {
+            if (i == 0) {
+                var resource = arguments[i];
+                url += resource;
+            } else {
+                var param = arguments[i];
+                url += '/' + param;
+            }
         }
         return url;
     }
@@ -121,16 +138,30 @@
     }
 
     //--------------------------------------------------------------------------
+
+    function downloadBookmark(id, onend, onerror) {
+        var req_url = getResourceURL(_resources.download_bookmark, _access_token, id);
+
+        $.get(req_url, function(data) {
+            onend(data);
+        })
+        .error(function(jqXHR, textStatus, errorThrown) {
+            onerror(textStatus);
+        });
+    }
+
+    //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
     obj.popcorn_api = {
-        initialize     : initialize,
-        setAccessToken : setAccessToken,
-        getResourceURL : getResourceURL,
-        login          : login,
-        getActiveUser  : getActiveUser,
-        getBookmarks   : getBookmarks,
-        addBookmark    : addBookmark
+        initialize       : initialize,
+        setAccessToken   : setAccessToken,
+        getResourceURL   : getResourceURL,
+        login            : login,
+        getActiveUser    : getActiveUser,
+        getBookmarks     : getBookmarks,
+        addBookmark      : addBookmark,
+        downloadBookmark : downloadBookmark
     };
 
 })(this);

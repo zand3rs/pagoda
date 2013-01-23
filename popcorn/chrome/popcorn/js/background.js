@@ -2,23 +2,25 @@
 //-------------------------------------------------------------------------
 
 function downloadHandler(data, onend, onerror) {
+    var id = data.id;
     var url = data.url;
+    var src_url = data.src_url;
     var dest_dir = data.dest_dir;
     var index = data.index;
 
     popcorn.download(url, dest_dir, function(fpath) {
-        console.log('download successful: ' + fpath);
+        console_log('download successful: ' + fpath);
         popcorn.extract(fpath, dest_dir, function(fpath) {
-            console.log('extract successful: ' + fpath);
+            console_log('extract successful: ' + fpath);
             popcorn.getFsUrl(index, function(url) {
-                console.log('index: ' + url);
+                console_log('index: ' + url);
                 onend(url);
             }, function(e) {
-                console.log('index error: ' + index + ': ' + e.toString());
+                console_log('index error: ' + index + ': ' + e.toString());
                 onerror(e);
             });
         }, function(e) {
-            console.log('extract failed: ' + fpath);
+            console_log('extract failed: ' + fpath);
             onerror(e);
         });
     }, onerror);
@@ -27,7 +29,7 @@ function downloadHandler(data, onend, onerror) {
 //-------------------------------------------------------------------------
 
 function messageHandler(request, sender, sendResponse) {
-    console.log("messageHandler got: ", request);
+    console_log("messageHandler got: ", request);
     
     var cmd = request.cmd;
     var data = request.data;

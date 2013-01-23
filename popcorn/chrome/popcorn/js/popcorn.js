@@ -395,6 +395,7 @@
     //--------------------------------------------------------------------------
 
     function extract(fpath, folder, onend, onerror, onprogress) {
+        console_log("extract: fpath: " + fpath + ", folder: " + folder);
         var extract_key = $.md5(fpath + '-' + folder);
         var extract_data = JSON.stringify({fpath: fpath, folder: folder, status: 'ongoing'});
         localStorage.setItem(extract_key, extract_data);
@@ -462,6 +463,7 @@
     //--------------------------------------------------------------------------
 
     function extract_status(fpath, folder) {
+        console_log("extract_status: fpath: " + fpath + ", folder: " + folder);
         var extract_key = $.md5(fpath + '-' + folder);
         var extract_data = localStorage.getItem(extract_key);
         var retval = 'not_found';
