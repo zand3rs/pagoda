@@ -14,6 +14,7 @@ class BookmarksController extends AppController {
 
     public function beforeFilter() {
         parent::beforeFilter();
+        $this->Auth->allow('download');
 
         $user = $this->User->read(null, $this->Auth->user('id'));
         if (!$user || $user['User']['mobile_status'] !== 'VERIFIED') {
@@ -125,6 +126,24 @@ class BookmarksController extends AppController {
         $this->redirect(array('action' => 'index'));
     }
 
+    //--------------------------------------------------------------------------
+
+    public function download($id = null) {
+        $this->Bookmark->id = $id;
+        $this->Bookmark->recursive = -1;
+        $bookmark = $this->Bookmark->read();
+
+        if ($bookmark && $bookmark['Bookmark']['archive']) {
+            if (!$bookmark['Bookmark']['downloaded']) {
+                $this->Bookmark->set('downloaded', 1);
+                $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
+                $this->Bookmark->save();
+            }
+            $this->redirect($bookmark['Bookmark']['archive']);
+        } else {
+            throw new NotFoundException(__('Invalid bookmark'));
+        }
+    }
     //==========================================================================
     //-- json output
 
