@@ -16,10 +16,10 @@ class BookmarksController extends AppController {
         parent::beforeFilter();
         $this->Auth->allow('download');
 
-        $user = $this->User->read(null, $this->Auth->user('id'));
-        if (!$user || $user['User']['mobile_status'] !== 'VERIFIED') {
-            $this->redirect(array('controller' => 'users', 'action' => 'index'));
-        }
+        //$user = $this->User->read(null, $this->Auth->user('id'));
+        //if (!$user || $user['User']['mobile_status'] !== 'VERIFIED') {
+        //    $this->redirect(array('controller' => 'users', 'action' => 'index'));
+        //}
     }
 
     //--------------------------------------------------------------------------
@@ -130,19 +130,22 @@ class BookmarksController extends AppController {
 
     public function download($id = null) {
         $this->Bookmark->id = $id;
-        $this->Bookmark->recursive = -1;
         $bookmark = $this->Bookmark->read();
 
-        if ($bookmark && $bookmark['Bookmark']['archive']) {
-            if (!$bookmark['Bookmark']['downloaded']) {
-                $this->Bookmark->set('downloaded', 1);
-                $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
-                $this->Bookmark->save();
-            }
-            $this->redirect($bookmark['Bookmark']['archive']);
-        } else {
+        if (!$bookmark || empty($bookmark['Bookmark']['archive'])) {
             throw new NotFoundException(__('Invalid bookmark'));
         }
+
+        if ($bookmark['User']['mobile_status'] !== 'VERIFIED') {
+            throw new MethodNotAllowedException(__('Mobile number is unverified'));
+        }
+
+        if (!$bookmark['Bookmark']['downloaded']) {
+            $this->Bookmark->set('downloaded', 1);
+            $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
+            $this->Bookmark->save();
+        }
+        $this->redirect($bookmark['Bookmark']['archive']);
     }
     //==========================================================================
     //-- json output

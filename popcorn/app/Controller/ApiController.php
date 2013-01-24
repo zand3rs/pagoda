@@ -123,10 +123,16 @@ class ApiController extends AppController {
     public function download_bookmark($access_token = null, $id = null) {
         $user = $this->User->findByAccessToken($access_token);
         if (!$user) {
+            //-- UnAuthorized...
             return $this->response->statusCode(401);
         }
-        $user_id = $user['User']['id'];
 
+        if ($user['User']['mobile_status'] !== 'VERIFIED') {
+            //-- MethodNotAllowed...
+            return $this->response->statusCode(405);
+        }
+
+        $user_id = $user['User']['id'];
         $bookmark = $this->Bookmark->find('first', array(
                     'conditions' => array(
                         'Bookmark.id' => $id,
@@ -135,17 +141,18 @@ class ApiController extends AppController {
                     'recursive' => -1,
                     ));
 
-        if ($bookmark && $bookmark['Bookmark']['archive']) {
-            if (!$bookmark['Bookmark']['downloaded']) {
-                $this->Bookmark->id = $id;
-                $this->Bookmark->set('downloaded', 1);
-                $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
-                $this->Bookmark->save();
-            }
-            $this->redirect($bookmark['Bookmark']['archive']);
-        } else {
+        if (!$bookmark || empty($bookmark['Bookmark']['archive'])) {
+            //-- NotFound...
             return $this->response->statusCode(404);
         }
+
+        if (!$bookmark['Bookmark']['downloaded']) {
+            $this->Bookmark->id = $id;
+            $this->Bookmark->set('downloaded', 1);
+            $this->Bookmark->set('downloaded_at', date('Y-m-d H:i:s'));
+            $this->Bookmark->save();
+        }
+        $this->redirect($bookmark['Bookmark']['archive']);
     }
 
     //--------------------------------------------------------------------------

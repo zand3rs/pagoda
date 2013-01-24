@@ -49,8 +49,8 @@ class AppController extends Controller {
                 $this->log($user, 'app');
                 $this->Cookie->write('user', $user, false);
             }
-        } else {
-            $this->Cookie->destroy();
+        //} else {
+        //    $this->Cookie->destroy();
         }
     }
 
