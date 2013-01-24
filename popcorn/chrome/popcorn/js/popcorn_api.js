@@ -104,7 +104,10 @@
 
         $.get(req_url, function(data) {
             parseData(data);
-        }, 'json');
+        }, 'json')
+        .error(function(jqXHR, textStatus, errorThrown) {
+            onend(new Array());
+        });
     }
 
     //--------------------------------------------------------------------------
@@ -135,9 +138,7 @@
         .error(function(jqXHR, textStatus, errorThrown) {
         })
         .complete(function(jqXHR, textStatus) {
-            if (onend) {
-                onend();
-            }
+            if (onend) onend();
         });
     }
 

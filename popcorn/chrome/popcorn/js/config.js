@@ -2,7 +2,7 @@
 //-------------------------------------------------------------------------
 
 var CONFIG = {
-    host  : 'http://localhost/~zander/popcorn',
+    host  : 'http://popcorn.chikka.com',
     debug : false
 }
 

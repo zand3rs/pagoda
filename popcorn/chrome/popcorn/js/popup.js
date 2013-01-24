@@ -155,9 +155,11 @@ function getBookmarks(onend) {
     }
 
     popcorn.readFileAsText(bookmarks_path, function(data) {
+        console_log('getBookmarks: ', data);
         var bookmarks = JSON.parse(data);
         onend(bookmarks);
     }, function() {
+        console_log('getBookmarks: ' + bookmarks_path + ': not found');
         _getBookmarks();
     });
 }
@@ -173,7 +175,7 @@ function verifyBookmarksChecksum(onend) {
         var data_cs = $.md5(data);
 
         getBookmarksChecksum(function(cs) {
-            console_log('checksum: ' + cs);
+            console_log('checksum: ' + cs + ', ' + data_cs);
             if (cs != data_cs) {
                 console_log('data_checksum:' + data_cs);
                 popcorn.deleteFile(bookmarks_path, function() {
