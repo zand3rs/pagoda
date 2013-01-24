@@ -23,7 +23,13 @@ function downloadHandler(data, onend, onerror) {
             console_log('extract failed: ' + fpath);
             onerror(e);
         });
-    }, onerror);
+    }, function(e) {
+        if (parseInt(e, 10) == 405) {
+            onerror('Unverified mobile number');
+        } else {
+            onerror(e);
+        }
+    });
 }
 
 //-------------------------------------------------------------------------

@@ -324,7 +324,7 @@
         function _sync() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, false); // Note: synchronous
-            xhr.responseType = 'arraybuffer';
+            xhr.responseType = 'blob';
             xhr.send();
 
             var fpath = getFilePath(url, folder);
@@ -334,10 +334,14 @@
         function _async() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url);
-            xhr.responseType = 'arraybuffer';
-            xhr.onload = function() {
-                var fpath = getFilePath(url, folder);
-                saveAs(fpath, xhr.response, onend, onerror);
+            xhr.responseType = 'blob';
+            xhr.onload = function(e) {
+                if (this.status == 200) { 
+                    var fpath = getFilePath(url, folder);
+                    saveAs(fpath, xhr.response, onend, onerror);
+                } else {
+                    onerror(this.status + ': ' + this.statusText);
+                }
             }
             xhr.send();
         }

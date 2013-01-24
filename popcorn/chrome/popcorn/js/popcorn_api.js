@@ -55,6 +55,7 @@
     //--------------------------------------------------------------------------
 
     function login(email, onend) {
+        console_log("api: login...");
         var req_url = getResourceURL(_resources.login);
 
         var dataObj = {
@@ -73,6 +74,7 @@
     //--------------------------------------------------------------------------
 
     function getActiveUser(onend) {
+        console_log("api: getActiveUser...");
         var req_url = getResourceURL(_resources.user, _access_token);
 
         $.get(req_url, function(data) {
@@ -86,6 +88,7 @@
     //--------------------------------------------------------------------------
 
     function getBookmarks(onend) {
+        console_log("api: getBookmarks...");
         var req_url = getResourceURL(_resources.bookmarks, _access_token);
 
         function parseData(data) {
@@ -107,6 +110,7 @@
     //--------------------------------------------------------------------------
 
     function addBookmark(title, url, onend) {
+        console_log("api: addBookmark...");
         var req_url = getResourceURL(_resources.add_bookmark, _access_token);
 
         var dataObj = {
@@ -140,6 +144,7 @@
     //--------------------------------------------------------------------------
 
     function downloadBookmark(id, onend, onerror) {
+        console_log("api: downloadBookmark...");
         var req_url = getResourceURL(_resources.download_bookmark, _access_token, id);
 
         $.get(req_url, function(data) {

@@ -110,6 +110,17 @@ function getActiveUser(onend) {
 
 //-------------------------------------------------------------------------
 
+function deleteActiveUser(onend) {
+    console_log('deleteActiveUser: user cookie: ' + COOKIES.user);
+
+    chrome.cookies.remove({url: CONFIG.host, name: COOKIES.user}, function(cookie) {
+        console_log(cookie);
+        onend();
+    });
+}
+
+//-------------------------------------------------------------------------
+
 function getBookmarksChecksum(onend) {
     var fpath = getStoragePath(POPCORN_PATH.bookmarks_cs);
     console_log('getBookmarksChecksum: fpath: ' + fpath);
@@ -119,7 +130,7 @@ function getBookmarksChecksum(onend) {
         onend(bookmarks_cs);
     }, function(msg) {
         console_log('getBookmarksChecksum: ' + msg);
-        onend('')
+        onend('');
     });
 }
 
@@ -387,9 +398,10 @@ function initHandlers() {
     });
 
     $("#logout-link").click(function() {
-        $.get("https://mail.google.com/mail/?logout", function(data) {
-            console.log("google logout: ", data);
-        });
+        //$.get("https://mail.google.com/mail/?logout", function(data) {
+        //    console.log("google logout: ", data);
+        //});
+        deleteActiveUser(window.close);
     });
 
     $("#test").click(function() {
@@ -418,6 +430,7 @@ function initialize(onend) {
                 activeUser = user;
                 popcorn_api.setAccessToken(activeUser.access_token);
                 $('#add-bookmark').removeClass('hidden');
+                $('#logout-link').removeClass('hidden');
                 onend();
             } else {
                 $('#login-link').removeClass('hidden');
