@@ -45,7 +45,7 @@ function getStoragePath(fpath) {
 
     if (fpath != POPCORN_PATH.user) {
         if (activeUser && activeUser.id) {
-            var user_dir = '/' + popcorn.strPad(activeUser.id, 10);
+            var user_dir = '/' + strPad(activeUser.id, 10);
             storage_path += user_dir;
         }
     }
@@ -84,10 +84,12 @@ function setActiveUser(user, onend) {
     console_log('setActiveUser: user_path: ' + user_path);
 
     var data = JSON.stringify(user);
-
     console_log('setActiveUser: data: ' + data);
+
     popcorn.saveAs(user_path, data, function(fpath) {
         if (onend) onend();
+    }, function(e) {
+        console_log('setActiveUser: saving error: ' + e);
     });
 }
 
@@ -97,7 +99,7 @@ function getActiveUser(onend) {
     console_log('getActiveUser: user cookie: ' + COOKIES.user);
 
     chrome.cookies.get({url: CONFIG.host, name: COOKIES.user}, function(cookie) {
-        console_log(cookie);
+        console_log('getActiveUser: cookie: ', cookie);
         if (cookie) {
             var data = decodeURIComponent(cookie.value);
             var user = JSON.parse(data);
@@ -137,36 +139,24 @@ function getBookmarksChecksum(onend) {
 //-------------------------------------------------------------------------
 
 function getBookmarks(onend) {
+    console_log('getBookmarks...');
+    
     var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
-    var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
-
-    function _getBookmarks() {
-        popcorn_api.getBookmarks(function(bookmarks) {
-            if (bookmarks.length > 0) {
-                var data = JSON.stringify(bookmarks);
-                var data_cs = $.md5(data);
-
-                console_log('popcorn_api.getBookmarks: data: ' + data);
-                popcorn.saveAs(bookmarks_path, data);
-                popcorn.saveAs(bookmarks_cs_path, data_cs);
-            }
-            onend(bookmarks);
-        });
-    }
+    var bookmarks = new Array();
 
     popcorn.readFileAsText(bookmarks_path, function(data) {
         console_log('getBookmarks: ', data);
-        var bookmarks = JSON.parse(data);
+        bookmarks = JSON.parse(data);
         onend(bookmarks);
     }, function() {
         console_log('getBookmarks: ' + bookmarks_path + ': not found');
-        _getBookmarks();
+        onend(bookmarks);
     });
 }
 
 //-------------------------------------------------------------------------
 
-function verifyBookmarksChecksum(onend) {
+function updateBookmarks(onchange) {
     var bookmarks_path = getStoragePath(POPCORN_PATH.bookmarks);
     var bookmarks_cs_path = getStoragePath(POPCORN_PATH.bookmarks_cs);
 
@@ -174,37 +164,31 @@ function verifyBookmarksChecksum(onend) {
         var data = JSON.stringify(bookmarks);
         var data_cs = $.md5(data);
 
-        getBookmarksChecksum(function(cs) {
-            console_log('checksum: ' + cs + ', ' + data_cs);
-            if (cs != data_cs) {
-                console_log('data_checksum:' + data_cs);
-                popcorn.deleteFile(bookmarks_path, function() {
-                    console_log('file deleted: ' + bookmarks_path);
-                }, function(e) {
-                    console_log('delete error: ' + bookmarks_path + ': ' + e);
-                });
+        console_log('updateBookmarks: data: ' + data);
+        console_log('updateBookmarks: data cs: ' + data_cs);
 
-                popcorn.deleteFile(bookmarks_cs_path, function() {
-                    console_log('file deleted: ' + bookmarks_cs_path);
+        getBookmarksChecksum(function(cs) {
+            console_log('updateBookmarks: current cs: ' + cs);
+            if (cs != data_cs) {
+                popcorn.saveAs(bookmarks_path, data, function(fpath) {
+                    console_log('updateBookmarks: ' + bookmarks_path + ' saving successful');
+                    popcorn.saveAs(bookmarks_cs_path, data_cs, function(fpath) {
+                        console_log('updateBookmarks: ' + bookmarks_cs_path + ' saving successful');
+                        if (onchange) onchange();
+                    }, function(e) {
+                        console_log('updateBookmarks: ' + bookmarks_cs_path + ' saving error: ' + e);
+                    });
                 }, function(e) {
-                    console_log('delete error: ' + bookmarks_cs_path + ': ' + e);
+                    console_log('updateBookmarks: ' + bookmarks_path + ' saving error: ' + e);
                 });
             }
-
-            if (onend) onend();
         });
     }
 
     popcorn_api.getBookmarks(function(bookmarks) {
-        if (bookmarks.length > 0) {
-            _verifyChecksum(bookmarks);
-        } else {
-            console_log('verifyBookmarksChecksum: bookmarks empty ');
-            if (onend) onend();
-        }
+        _verifyChecksum(bookmarks);
     }, function(e) {
-        console_log('verifyBookmarksChecksum error: ' + e);
-        if (onend) onend();
+        console_log('updateBookmarks: api error: ' + e);
     });
 }
 
@@ -290,6 +274,8 @@ function confirmBookmarkDownload(bookmark_id) {
 //-------------------------------------------------------------------------
 
 function showBookmarks() {
+    console_log('showBookmarks...');
+    
     function _clear() {
         $('#bookmarks').html('');
     }
@@ -347,11 +333,17 @@ function addBookmark(title, url) {
     if (!activeUser) {
         return console_log("addBookmark: Login required!");
     }
-
-    popcorn_api.addBookmark(title, url, function() {
+    function _onend() {
         if (! CONFIG.debug) {
             window.close();
         }
+    }
+    
+    popcorn_api.addBookmark(title, url, function() {
+        _onend();
+    }, function(e) {
+        console_log('addBookmark: error: ' + e);
+        _onend();
     });
 }
 
@@ -372,7 +364,8 @@ function doLogin(email, onend) {
 //-------------------------------------------------------------------------
 
 function refreshBookmarks() {
-    verifyBookmarksChecksum(showBookmarks);
+    showBookmarks();
+    updateBookmarks(showBookmarks);
 }
 
 //-------------------------------------------------------------------------
@@ -385,7 +378,7 @@ function initHandlers() {
     });
 
     $("#refresh").click(function() {
-        showBookmarks();
+        refreshBookmarks();
     });
     
     $("#clear-cache").click(function() {

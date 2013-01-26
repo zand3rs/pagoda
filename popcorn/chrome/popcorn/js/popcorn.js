@@ -1,23 +1,12 @@
 (function(obj) {
 
+    obj.storageInfo = obj.webkitStorageInfo || obj.mozStorageInfo || obj.storageInfo;
     obj.requestFileSystem = obj.webkitRequestFileSystem || obj.mozRequestFileSystem || obj.requestFileSystem;
     obj.resolveLocalFileSystemURL = obj.webkitResolveLocalFileSystemURL || obj.resolveLocalFileSystemURL;
     obj.BlobBuilder = obj.WebKitBlobBuilder || obj.mozBlobBuilder || obj.BlobBuilder;
     obj.URL = obj.webkitURL || obj.mozURL || obj.URL;
 
     var fs = null;
-
-    //--------------------------------------------------------------------------
-    //-------------------------------------------------------------------------
-
-    function strPad(i,l,s) {
-        var o = i.toString();
-        if (!s) { s = '0'; }
-        while (o.length < l) {
-            o = s + o;
-        }
-        return o;
-    }
 
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
@@ -49,6 +38,26 @@
         if (onerror) onerror(error);
     }
 
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+
+    function initialize(onend, onerror) {
+        zip.workerScriptsPath = "js/zip/";
+
+        obj.storageInfo.requestQuota(CONFIG.storage_type, CONFIG.storage_size, function(grantedBytes) {
+            console_log('initialize: grantedBytes: ' + grantedBytes);
+            obj.requestFileSystem(CONFIG.storage_type, grantedBytes, function(filesystem) {
+                fs = filesystem;
+                if (onend) onend();
+            }, function(e) {
+                if (onerror) fsErrorHandler(e, onerror);
+            });
+        }, function(e) {
+            if (onerror) fsErrorHandler(e, onerror);
+        });
+    }
+
+    //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
 
     function fsTruncate(file_entry, onend, onerror) {
@@ -142,21 +151,6 @@
     }
 
     //--------------------------------------------------------------------------
-    //--------------------------------------------------------------------------
-
-    function initialize(onend, onerror) {
-        zip.workerScriptsPath = "js/zip/";
-
-        //obj.requestFileSystem(obj.TEMPORARY, 5*1024*1024, function(filesystem)
-        obj.requestFileSystem(obj.PERSISTENT, 5*1024*1024*1024, function(filesystem)
-		{
-            fs = filesystem;
-            if (onend) onend();
-        }, function(e) {
-            if (onerror) fsErrorHandler(e, onerror);
-        });
-    }
-
     //--------------------------------------------------------------------------
 
     function createDir(root_dir_entry, folders, onend, onerror) {
@@ -336,11 +330,17 @@
             xhr.open('GET', url);
             xhr.responseType = 'blob';
             xhr.onload = function(e) {
+                console_log('download: _async: onload: ', e);
                 if (this.status == 200) { 
                     var fpath = getFilePath(url, folder);
                     saveAs(fpath, xhr.response, onend, onerror);
                 } else {
                     onerror(this.status + ': ' + this.statusText);
+                }
+            }
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 0) {
+                    onerror(this.status + ': Not connected!');
                 }
             }
             xhr.send();
@@ -531,8 +531,7 @@
         deleteFolder    : deleteFolder,
         deleteFile      : deleteFile,
         readFileAsText  : readFileAsText,
-        saveAs          : saveAs,
-        strPad          : strPad
+        saveAs          : saveAs
     };
 
 })(this);

@@ -54,7 +54,7 @@
 
     //--------------------------------------------------------------------------
 
-    function login(email, onend) {
+    function login(email, onend, onerror) {
         console_log("api: login...");
         var req_url = getResourceURL(_resources.login);
 
@@ -67,13 +67,13 @@
             onend(data);
         }, 'json')
         .error(function(jqXHR, textStatus, errorThrown) {
-            onend(null);
+            onerror(textStatus);
         });
     }
 
     //--------------------------------------------------------------------------
 
-    function getActiveUser(onend) {
+    function getActiveUser(onend, onerror) {
         console_log("api: getActiveUser...");
         var req_url = getResourceURL(_resources.user, _access_token);
 
@@ -81,13 +81,13 @@
             onend(data);
         }, 'json')
         .error(function(jqXHR, textStatus, errorThrown) {
-            onend(null);
+            onerror(textStatus);
         });
     }
 
     //--------------------------------------------------------------------------
 
-    function getBookmarks(onend) {
+    function getBookmarks(onend, onerror) {
         console_log("api: getBookmarks...");
         var req_url = getResourceURL(_resources.bookmarks, _access_token);
 
@@ -106,13 +106,13 @@
             parseData(data);
         }, 'json')
         .error(function(jqXHR, textStatus, errorThrown) {
-            onend(new Array());
+            onerror(textStatus);
         });
     }
 
     //--------------------------------------------------------------------------
 
-    function addBookmark(title, url, onend) {
+    function addBookmark(title, url, onend, onerror) {
         console_log("api: addBookmark...");
         var req_url = getResourceURL(_resources.add_bookmark, _access_token);
 
@@ -134,11 +134,12 @@
             data: payload
         })
         .success(function(data, textStatus, jqXHR) {
+            if (onend) onend();
         })
         .error(function(jqXHR, textStatus, errorThrown) {
+            if (onerror) onerror(textStatus);
         })
         .complete(function(jqXHR, textStatus) {
-            if (onend) onend();
         });
     }
 
