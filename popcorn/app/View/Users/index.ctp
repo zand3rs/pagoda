@@ -61,6 +61,6 @@
         <li><?php echo $this->Html->link(__('Resend Mobile Pin'), array('action' => 'generate_pin')); ?> </li>
         <li><?php echo $this->Html->link(__('Verify Mobile'), array('action' => 'verify')); ?> </li>
         <?php endif; ?>
-        <li><?php echo $this->Html->link(__('Bookmarks'), array('controller' => 'bookmarks')); ?> </li>
+        <li><?php echo $this->Html->link(__('My Clippings'), array('controller' => 'bookmarks')); ?> </li>
 	</ul>
 </div>

@@ -21,7 +21,7 @@ class AppController extends Controller {
             'logoutRedirect' => array('controller' => 'users', 'action' => 'login'),
             'autoRedirect' => false
         ),
-        'DebugKit.Toolbar',
+        //'DebugKit.Toolbar',
         'Resque.Resque'
     );
 
@@ -32,6 +32,7 @@ class AppController extends Controller {
         $this->Auth->allow('login', 'logout', 'signup', 'callback');
         $this->Cookie->name = 'popcorn';
         $this->Cookie->time = 0;
+        $this->layout = 'popnote';
     }
 
     //--------------------------------------------------------------------------
