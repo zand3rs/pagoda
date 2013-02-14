@@ -157,7 +157,7 @@ class UsersController extends AppController {
                 $this->Session->setFlash(__('The mobile number has been saved.'));
                 $this->redirect(array('action' => 'index'));
             } else {
-                $this->Session->setFlash(__('The mobile number could not be saved. Please, try again.'));
+                $this->Session->setFlash(__('The mobile number could not be saved. Please try again.'));
             }
         } else {
             $this->request->data = $data;

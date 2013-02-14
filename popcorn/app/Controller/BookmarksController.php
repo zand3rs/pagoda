@@ -72,7 +72,7 @@ class BookmarksController extends AppController {
                 $this->Session->setFlash(__('Clipping has been saved'));
                 $this->redirect(array('action' => 'index'));
             } else {
-                $this->Session->setFlash(__('Clipping could not be saved. Please, try again.'));
+                $this->Session->setFlash(__('Clipping could not be saved. Please try again.'));
             }
         }
         $this->render('add');
@@ -94,7 +94,7 @@ class BookmarksController extends AppController {
                 $this->Session->setFlash(__('Clipping has been saved'));
                 $this->redirect(array('action' => 'index'));
             } else {
-                $this->Session->setFlash(__('Clipping could not be saved. Please, try again.'));
+                $this->Session->setFlash(__('Clipping could not be saved. Please try again.'));
             }
         } else {
             $this->request->data = $this->Bookmark->read(null, $id);
