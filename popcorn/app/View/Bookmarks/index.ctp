@@ -1,5 +1,5 @@
 <div class="bookmarks index">
-	<h2><?php echo __('Bookmarks');?></h2>
+	<h2><?php echo __('My Clippings');?></h2>
 	<table cellpadding="0" cellspacing="0">
 	<tr>
 			<th><?php echo $this->Paginator->sort('title');?></th>

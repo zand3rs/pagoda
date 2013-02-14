@@ -31,10 +31,20 @@ class Bookmark extends AppModel {
                     //'on' => 'create', // Limit validation to 'create' or 'update' operations
                     ),
                 ),
+            'title' => array(
+                'notempty' => array(
+                    'rule' => array('notempty'),
+                    'message' => "Can't be blank.",
+                    //'allowEmpty' => false,
+                    //'required' => false,
+                    //'last' => false, // Stop validation after this rule
+                    //'on' => 'create', // Limit validation to 'create' or 'update' operations
+                    ),
+                ),
             'url' => array(
                 'notempty' => array(
                     'rule' => array('notempty'),
-                    //'message' => 'Your custom message here',
+                    'message' => "Can't be blank.",
                     //'allowEmpty' => false,
                     //'required' => false,
                     //'last' => false, // Stop validation after this rule

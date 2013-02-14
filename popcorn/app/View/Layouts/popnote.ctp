@@ -10,6 +10,8 @@ $cakeDescription = __d('cake_dev', 'Popnote');
 		<?php echo $title_for_layout; ?>
 	</title>
 	<?php
+		echo $this->Html->meta('icon');
+
 		echo $this->Html->css('popnote');
 
 		echo $scripts_for_layout;

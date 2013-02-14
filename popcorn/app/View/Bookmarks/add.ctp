@@ -1,11 +1,10 @@
 <div class="bookmarks form">
 <?php echo $this->Form->create('Bookmark');?>
 	<fieldset>
-		<legend><?php echo __('Add Bookmark'); ?></legend>
+		<legend><?php echo __('Add Clip!'); ?></legend>
 	<?php
 		echo $this->Form->input('title');
 		echo $this->Form->input('url');
-		echo $this->Form->input('local_path');
 	?>
 	</fieldset>
 <?php echo $this->Form->end(__('Submit'));?>
