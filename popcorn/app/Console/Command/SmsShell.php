@@ -18,7 +18,7 @@ class SmsShell extends Shell {
 
         $mobile = $user['User']['mobile'];
         $pin_code = $user['User']['pin_code']; 
-        $message = "Your popcorn verification pin code is: $pin_code";
+        $message = "Your Popnote verification code is $pin_code";
 
         $this->log("mobile_verification: mobile: $mobile", 'sms');
         $this->log("mobile_verification: message: $message", 'sms');
@@ -41,7 +41,7 @@ class SmsShell extends Shell {
 
         $mobile = $bookmark['User']['mobile'];
         $bookmark_title = $bookmark['Bookmark']['title'];
-        $message = "You've just downloaded: $bookmark_title";
+        $message = "You've just downloaded $bookmark_title";
 
         $this->log("mobile: $mobile", 'sms');
         $this->log("message: $message", 'sms');

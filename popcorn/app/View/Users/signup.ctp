@@ -10,6 +10,7 @@
 		echo $this->Form->input('token_type', array('type' => 'hidden'));
 		echo $this->Form->input('token_expiry', array('type' => 'hidden'));
 	?>
+    <div>Enter your Smart mobile number (ex. 639181234567)</div>
 	</fieldset>
 <?php echo $this->Form->end(__('Submit'));?>
 </div>

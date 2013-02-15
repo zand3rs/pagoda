@@ -25,15 +25,23 @@ class User extends AppModel {
             'mobile' => array(
                 'unique' => array(
                     'rule' => array('isUnique'),
-                    'message' => 'Mobile number is already taken',
+                    'message' => 'Mobile number has already been used',
                     //'allowEmpty' => false,
                     //'required' => false,
                     //'last' => false, // Stop validation after this rule
                     //'on' => 'create', // Limit validation to 'create' or 'update' operations
                     ),
-                'numeric' => array(
-                    'rule' => array('numeric'),
-                    'message' => 'Mobile number should be numeric',
+                //'numeric' => array(
+                    //'rule' => array('numeric'),
+                    //'message' => 'Mobile number should be numeric',
+                    //'allowEmpty' => false,
+                    //'required' => false,
+                    //'last' => false, // Stop validation after this rule
+                    //'on' => 'create', // Limit validation to 'create' or 'update' operations
+                    //),
+                'valid' => array(
+                    'rule' => '/^63\d{10}$/',
+                    'message' => 'Please enter a valid mobile number',
                     //'allowEmpty' => false,
                     //'required' => false,
                     //'last' => false, // Stop validation after this rule

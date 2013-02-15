@@ -42,7 +42,7 @@ class UsersController extends AppController {
             $expiry_date = strtotime($data['User']['pin_expiry']);
             $current_date = strtotime(date('Y-m-d H:i:s'));
 
-            if ($data['User']['pin_code'] === $this->request->data['User']['pin_code']) {
+            if (strtoupper($data['User']['pin_code']) === strtoupper($this->request->data['User']['pin_code'])) {
                 if ($expiry_date > $current_date && 
                         $this->User->updateAll(array(
                                 'mobile_status' => "'VERIFIED'"
@@ -98,13 +98,13 @@ class UsersController extends AppController {
 
         if ($this->request->is('post')) {
             $this->User->create();
-            $this->request->data['User']['pin_code'] = Secure::randomString();
+            $this->request->data['User']['pin_code'] = Secure::randomString(4);
             $this->request->data['User']['pin_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
             $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
             $this->request->data['User']['date_registered'] = date('Y-m-d H:i:s');
 
             if (! $this->User->save($this->request->data)) {
-                $this->Session->setFlash(__('Unable to register. Please try again.'));
+                $this->Session->setFlash(__('Mobile number could not be saved. Please try again.'));
             }
         } else {
             $response = Web::get($this->getOAuth2UserInfoUri());
@@ -148,16 +148,16 @@ class UsersController extends AppController {
 
             $status = true;
             if ($old_mobile != $new_mobile) {
-                $this->request->data['User']['pin_code'] = Secure::randomString();
+                $this->request->data['User']['pin_code'] = Secure::randomString(4);
                 $this->request->data['User']['pin_expiry'] = date('Y-m-d H:i:s', strtotime('+1 day'));
                 $this->request->data['User']['mobile_status'] = 'UNVERIFIED';
                 $status = $this->User->save($this->request->data);
             }
             if ($status) {
-                $this->Session->setFlash(__('The mobile number has been saved.'));
+                $this->Session->setFlash(__('Mobile number has been saved.'));
                 $this->redirect(array('action' => 'index'));
             } else {
-                $this->Session->setFlash(__('The mobile number could not be saved. Please try again.'));
+                $this->Session->setFlash(__('Mobile number could not be saved. Please try again.'));
             }
         } else {
             $this->request->data = $data;
@@ -176,7 +176,7 @@ class UsersController extends AppController {
             $this->redirect($this->Auth->logout());
         }
         
-        $pin_code = Secure::randomString();
+        $pin_code = Secure::randomString(4);
         $pin_expiry = date('Y-m-d H:i:s', strtotime('+1 day'));
         $mobile_status = 'UNVERIFIED';
 
@@ -185,9 +185,9 @@ class UsersController extends AppController {
         $this->User->set('mobile_status', $mobile_status);
 
         if ($this->User->save()) {
-            $this->Session->setFlash(__('Mobile pin code generated.'));
+            $this->Session->setFlash(__('Verification code sent. Click verify mobile when ready.'));
         } else {
-            $this->Session->setFlash(__('Unable to generate mobile pin code.'));
+            $this->Session->setFlash(__('Unable to generate verification code.'));
         }
 
         $this->redirect(array('action' => 'index'));
