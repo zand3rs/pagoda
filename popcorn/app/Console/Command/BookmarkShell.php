@@ -95,7 +95,7 @@ class BookmarkShell extends Shell {
         $this->log('local_path: '.$local_path, 'console');
         $this->log('abs_path: '.$abs_path, 'console');
 
-        $file = new File($abs_path, true);
+        $file = new File($abs_path, true, 0777);
         $file->write($response_body);
         $file->close();
 
@@ -108,6 +108,9 @@ class BookmarkShell extends Shell {
         $this->log('archive: '.$archive, 'console');
 
         $archive_status = Zip::create($archive_file, $archive_path, true);
+        if ($archive_status) {
+            chmod($archive_file, 0666);
+        }
 
         $this->log('archive_status: '. ($archive_status) ? 'success' : 'error', 'console');
 

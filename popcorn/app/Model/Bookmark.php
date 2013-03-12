@@ -1,5 +1,7 @@
 <?php
 App::uses('AppModel', 'Model');
+App::uses('File', 'Utility');
+App::uses('Folder', 'Utility');
 /**
  * Bookmark Model
  *
@@ -77,6 +79,44 @@ class Bookmark extends AppModel {
             Resque::enqueue('default', 'SmsShell', array('download_bookmark', $this->id));
         }
         return true;
+    }
+
+    public function beforeDelete($cascade = true) {
+        $bookmark = $this->find('first', array(
+                        'conditions' => array('id' => $this->id),
+                        'recursive' => -1
+                    ));
+        $local_path = $bookmark['Bookmark']['local_path'];
+        $archive = $bookmark['Bookmark']['archive'];
+
+        $root_dir = rtrim(WWW_ROOT, DS);
+        $abs_path = $root_dir.$local_path;
+        $abs_archive = $root_dir.$archive;
+        $abs_dir = dirname($abs_path);
+
+        if (is_dir($abs_dir)) {
+            $this->delTree($abs_dir);
+        }
+        if (is_file($abs_archive)) {
+            @unlink($abs_archive);
+        }
+
+        return true;
+    }
+
+    private function delTree($dir) { 
+        $dir = rtrim($dir, DS);
+        $files = glob($dir.DS.'*', GLOB_MARK); 
+        foreach ($files as $file) {
+            if (substr($file, -1) == DS) {
+                delTree($file);
+            } else {
+                @unlink($file);
+            }
+        }
+        if (is_dir($dir)) {
+            @rmdir($dir);
+        }
     }
 
 }

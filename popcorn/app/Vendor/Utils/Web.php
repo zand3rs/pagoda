@@ -1,5 +1,6 @@
 <?php
 App::uses('File', 'Utility');
+App::uses('Folder', 'Utility');
 App::uses('HttpSocket', 'Network/Http');
 
 class Web {
@@ -77,7 +78,7 @@ class Web {
             CakeLog::write('web', 'File is a CSS!!!');
         }
 
-        $f = new File($abs_path, true);
+        $f = new File($abs_path, true, 0777);
         $f->open('wb', true);
         $socket = new HttpSocket();
         $socket->setContentResource($f->handle);
