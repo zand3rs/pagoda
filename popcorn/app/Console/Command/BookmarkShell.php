@@ -28,6 +28,7 @@ class BookmarkShell extends Shell {
 
         $response = Web::get($url);
         $response_body = $response->body;
+        $this->log('http_code: '.$response->code, 'console');
 
         //-- set params...
         $basename = md5($url);
@@ -41,7 +42,7 @@ class BookmarkShell extends Shell {
         $this->log('dest_dir: '.$dest_dir, 'console');
 
         //-- get href files...
-        $match = preg_match_all('/href *= *[\'"](?!https?:\/\/)([^\'"]+\.[[:alnum:]]+)[^\'"]*["\']/', $response_body, $matches);
+        $match = preg_match_all('/href *= *[\'"](?!https?:\/\/)([^\'"]+\.[[:alnum:]]+[^\'"]*)["\']/', $response_body, $matches);
         if ($match) {
             foreach($matches[1] as $component) {
                 //-- skip unsupported resources
@@ -66,7 +67,7 @@ class BookmarkShell extends Shell {
         }
 
         //-- get src files...
-        $match = preg_match_all('/src *= *[\'"]([^\'"]+\.[[:alnum:]]+)[^\'"]*["\']/', $response_body, $matches);
+        $match = preg_match_all('/src *= *[\'"]([^\'"]+\.[[:alnum:]]+[^\'"]*)["\']/', $response_body, $matches);
         if ($match) {
             foreach($matches[1] as $component) {
                 try {

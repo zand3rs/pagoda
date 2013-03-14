@@ -11,8 +11,13 @@ class Web {
     //--------------------------------------------------------------------------
 
     static public function get($url) {
+        $request = array('header' => array(
+                            'Accept' => '*/*',
+                            'Pragma' => 'no-cache',
+                            'Cache-Control' => 'no-cache'
+                        ));
         $socket = new HttpSocket();
-        $result = $socket->get($url);
+        $result = $socket->get($url, array(), $request);
         //$response = $socket->response;
 
         return $result;
@@ -35,21 +40,15 @@ class Web {
     //--------------------------------------------------------------------------
 
     static public function download($url, $dir = '', $file = '', $recursive = false) {
-        $pathinfo = pathinfo($url);
+        //$pathinfo = pathinfo($url);
+        $pathinfo = parse_url($url);
         $default_ext = '.html';
         $root_dir = rtrim(WWW_ROOT, DS);
         $upload_dir = Configure::read('UPLOAD_ROOT');
         $dest_dir = rtrim($dir, DS);
-        $dest_file = $file;
+        $dest_file = !empty($file) ? $file : $pathinfo['path'];
 
-        CakeLog::write('web', 'url: '.$url);
-        CakeLog::write('web', 'dir: '.$dir);
-        CakeLog::write('web', 'file: '.$file);
-        CakeLog::write('web', 'root_dir: '.$root_dir);
-        CakeLog::write('web', 'upload_dir: '.$upload_dir);
-        CakeLog::write('web', 'dest_dir: '.$dest_dir);
-        CakeLog::write('web', 'dest_file: '.$dest_file);
-
+        /*
         if (empty($dest_file)) {
             $dest_file = $pathinfo['filename'];
             $extension = $default_ext;
@@ -63,10 +62,23 @@ class Web {
 
             $dest_file .= $extension;
         }
+        */
+
         //-- clean dest_file
+        $dest_file = ltrim($dest_file, DS);
         $dest_file = preg_replace('/\?.*$/', '', $dest_file);
         $dest_file = preg_replace('/\.php.?$/', '.html', $dest_file);
+        if (empty($dest_file)) {
+            $dest_file = md5($url);
+        }
 
+        CakeLog::write('web', 'url: '.$url);
+        CakeLog::write('web', 'pathinfo: '.print_r($pathinfo, true));
+        CakeLog::write('web', 'dir: '.$dir);
+        CakeLog::write('web', 'file: '.$file);
+        CakeLog::write('web', 'root_dir: '.$root_dir);
+        CakeLog::write('web', 'upload_dir: '.$upload_dir);
+        CakeLog::write('web', 'dest_dir: '.$dest_dir);
         CakeLog::write('web', 'dest_file: '.$dest_file);
 
         $local_path = $upload_dir.(!empty($dest_dir) ? DS.$dest_dir : '').DS.$dest_file;
@@ -82,7 +94,12 @@ class Web {
         $f->open('wb', true);
         $socket = new HttpSocket();
         $socket->setContentResource($f->handle);
-        $socket->get($url);
+        $request = array('header' => array(
+                            'Accept' => '*/*',
+                            'Pragma' => 'no-cache',
+                            'Cache-Control' => 'no-cache'
+                        ));
+        $socket->get($url, array(), $request);
         $f->close();
 
         return $dest_file;

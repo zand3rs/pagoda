@@ -2,6 +2,20 @@
 App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
 
+class Zipper extends ZipArchive {
+    public function addDir($path) { 
+        $this->addEmptyDir($path); 
+        $nodes = glob($path . '/*');
+        foreach ($nodes as $node) {
+            if (is_dir($node)) {
+                $this->addDir($node);
+            } else if (is_file($node)) {
+                $this->addFile($node);
+            }
+        }
+    }
+}
+
 class Zip {
 
     public function __construct() {
@@ -23,9 +37,8 @@ class Zip {
                 }
             }
         } else {
-            if (is_dir($files)) {
-                $dir = new Folder($files);
-                $validFiles = $dir->findRecursive();
+            if (file_exists($files)) {
+                $validFiles[] = $files;
             }
         }
 
@@ -33,15 +46,21 @@ class Zip {
             return false;
         }
 
-        $zip = new ZipArchive();
+        $zip = new Zipper();
         $type = $overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE;
         if ($zip->open($destination, $type) !== true) {
             return false;
         }
 
-        $dest = str_replace('.zip', '', basename($destination));
+        //$dest = str_replace('.zip', '', basename($destination));
+        //$zip->addFile($file, $dest . DS . basename($file));
+
         foreach ($validFiles as $file) {
-            $zip->addFile($file, $dest . DS . basename($file));
+            if (is_dir($file)) {
+                $zip->addDir($file);
+            } else {
+                $zip->addFile($file);
+            }
         }
         $zip->close();
 

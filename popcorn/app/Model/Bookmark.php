@@ -81,6 +81,9 @@ class Bookmark extends AppModel {
         return true;
     }
 
+    /*
+    !!!! Warning: the ff. code is very dangerous !!!! 
+
     public function beforeDelete($cascade = true) {
         $bookmark = $this->find('first', array(
                         'conditions' => array('id' => $this->id),
@@ -109,7 +112,7 @@ class Bookmark extends AppModel {
         $files = glob($dir.DS.'*', GLOB_MARK); 
         foreach ($files as $file) {
             if (substr($file, -1) == DS) {
-                delTree($file);
+                $this->delTree($file);
             } else {
                 @unlink($file);
             }
@@ -118,5 +121,6 @@ class Bookmark extends AppModel {
             @rmdir($dir);
         }
     }
+    */
 
 }
