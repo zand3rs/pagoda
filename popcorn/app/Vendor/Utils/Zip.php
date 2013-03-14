@@ -3,14 +3,14 @@ App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
 
 class Zipper extends ZipArchive {
-    public function addDir($path) { 
-        $this->addEmptyDir($path); 
+    public function addDir($path, $dest) { 
+        $this->addEmptyDir($dest); 
         $nodes = glob($path . '/*');
         foreach ($nodes as $node) {
             if (is_dir($node)) {
-                $this->addDir($node);
+                $this->addDir($node, $dest.DS.basename($node));
             } else if (is_file($node)) {
-                $this->addFile($node);
+                $this->addFile($node, $dest.DS.basename($node));
             }
         }
     }
@@ -52,14 +52,12 @@ class Zip {
             return false;
         }
 
-        //$dest = str_replace('.zip', '', basename($destination));
-        //$zip->addFile($file, $dest . DS . basename($file));
-
+        $dest = str_replace('.zip', '', basename($destination));
         foreach ($validFiles as $file) {
             if (is_dir($file)) {
-                $zip->addDir($file);
+                $zip->addDir($file, $dest.DS.basename($file));
             } else {
-                $zip->addFile($file);
+                $zip->addFile($file, $dest.DS.basename($file));
             }
         }
         $zip->close();
