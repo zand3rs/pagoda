@@ -55,7 +55,7 @@ class Zip {
         $dest = str_replace('.zip', '', basename($destination));
         foreach ($validFiles as $file) {
             if (is_dir($file)) {
-                $zip->addDir($file, $dest.DS.basename($file));
+                $zip->addDir($file, $dest);
             } else {
                 $zip->addFile($file, $dest.DS.basename($file));
             }
